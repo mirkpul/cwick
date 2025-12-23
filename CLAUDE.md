@@ -238,11 +238,22 @@ ANTHROPIC_API_KEY=sk-ant-...
 # Authentication
 JWT_SECRET=your-super-secret-key-change-in-production
 
-# OAuth (for email integration)
+# OAuth for User Login (Google/GitHub)
+GOOGLE_OAUTH_CLIENT_ID=...
+GOOGLE_OAUTH_CLIENT_SECRET=...
+GOOGLE_OAUTH_REDIRECT_URI=http://localhost:3001/api/oauth/auth/google/callback
+GITHUB_OAUTH_CLIENT_ID=...
+GITHUB_OAUTH_CLIENT_SECRET=...
+GITHUB_OAUTH_REDIRECT_URI=http://localhost:3001/api/oauth/auth/github/callback
+FRONTEND_URL=http://localhost:3000
+
+# OAuth for Email Integration (Gmail/Outlook)
 GMAIL_CLIENT_ID=...
 GMAIL_CLIENT_SECRET=...
+GMAIL_REDIRECT_URI=http://localhost:3001/api/email/auth/gmail/callback
 OUTLOOK_CLIENT_ID=...
 OUTLOOK_CLIENT_SECRET=...
+OUTLOOK_REDIRECT_URI=http://localhost:3001/api/email/auth/outlook/callback
 
 # Encryption (auto-generated if not provided)
 ENCRYPTION_KEY=base64-encoded-32-byte-key
@@ -286,11 +297,35 @@ All code must pass:
 
 ### Authentication Flow
 
+**Standard Email/Password Auth:**
 1. User registers/logs in via `/api/auth/register` or `/api/auth/login`
 2. Backend returns JWT token
 3. Frontend stores token in memory (AuthContext)
 4. Token included in Authorization header: `Bearer <token>`
 5. Backend middleware validates token for protected routes
+
+**OAuth Login (Google/GitHub):**
+1. User clicks "Google" or "GitHub" button on login page
+2. Frontend redirects to `/api/oauth/auth/{provider}`
+3. Backend initiates OAuth flow with provider
+4. User completes OAuth on provider's site
+5. Provider redirects to `/api/oauth/auth/{provider}/callback`
+6. Backend creates/updates user, generates JWT token
+7. Redirects to `/oauth/callback?token={jwt}` on frontend
+8. Frontend stores token and redirects to dashboard
+
+**Email Integration OAuth (Gmail/Outlook):**
+1. Logged-in user clicks "Connect Gmail/Outlook" in dashboard
+2. Frontend calls `/api/email/auth/{provider}` to get auth URL
+3. Opens auth URL in popup window
+4. User completes OAuth on provider's site
+5. Provider redirects to `/api/email/auth/{provider}/callback`
+6. Backend stores encrypted credentials in database
+7. Redirects to `/auth/email/callback?code=success&provider={provider}`
+8. Frontend callback page sends message to parent window
+9. Parent window (dashboard) receives success and refreshes status
+
+**For detailed OAuth setup instructions, see `docs/oauth-setup.md`**
 
 ### Semantic Search Pattern
 
@@ -316,6 +351,7 @@ All code must pass:
 
 - **Project Documentation**: See `docs/` directory.
 - **Setup Guide**: `docs/setup/guide.md`
+- **OAuth Setup**: `docs/oauth-setup.md` - Complete guide for configuring OAuth (Google/GitHub login + Gmail/Outlook integration)
 - **RAG Debugging**: `docs/rag/debugging.md`
 - **Configuration**: `docs/backend/configuration.md`
 - **Database Schema**: `database/migrations/001_initial_schema.sql`
