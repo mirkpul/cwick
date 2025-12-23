@@ -42,7 +42,6 @@ interface Conversation {
     llm_model: string;
     temperature: number;
     max_tokens: number;
-    handover_threshold: number;
     semantic_search_threshold?: number;
     semantic_search_max_results?: number;
     name?: string;
@@ -69,7 +68,6 @@ interface TwinResponse {
     message?: Record<string, unknown>;
     shouldRespond?: boolean;
     reason?: string;
-    handoverTriggered?: boolean;
 }
 
 class ChatService {
@@ -254,14 +252,6 @@ class ChatService {
 
             const conversation = convResult.rows[0] as Conversation;
 
-            if (conversation.status === 'handed_over') {
-                logger.debug('Conversation already in handover mode', { conversationId });
-                return {
-                    shouldRespond: false,
-                    reason: 'Conversation is in handover mode',
-                };
-            }
-
             const messageHistoryLimit = config.conversations.messageHistoryLimit || 10;
             const messages = await this.getConversationMessages(conversationId, messageHistoryLimit);
             const isFirstMessage = messages.length === 0;
@@ -335,37 +325,14 @@ class ChatService {
                 finishReason
             );
 
-            const handoverCheck = await llmService.checkConfidenceForHandover(
-                response,
-                conversation.handover_threshold
-            );
-
-            if (handoverCheck.shouldHandover) {
-                await this.triggerHandover(conversationId, handoverCheck.reason || '');
-
-                const savedMessage = await this.sendMessage(
-                    conversationId,
-                    'twin',
-                    response.content + '\n\n[Requesting professional assistance...]'
-                );
-
-                return {
-                    message: savedMessage,
-                    handoverTriggered: true,
-                    reason: handoverCheck.reason || undefined,
-                };
-            }
-
             const savedMessage = await this.sendMessage(conversationId, 'twin', response.content);
 
             await this.trackAnalyticsEvent(conversation.twin_id, 'message_sent', {
                 conversation_id: conversationId,
-                confidence: handoverCheck.confidence,
             });
 
             return {
                 message: savedMessage,
-                handoverTriggered: false,
             };
         } catch (error) {
             logger.error('Generate twin response error:', error);
@@ -452,122 +419,17 @@ class ChatService {
                 conversation.max_tokens
             );
 
-            const handoverCheck = await llmService.checkConfidenceForHandover(
-                response,
-                conversation.handover_threshold
-            );
-
-            if (handoverCheck.shouldHandover) {
-                await this.triggerHandover(conversationId, handoverCheck.reason || '');
-
-                const savedMessage = await this.sendMessage(
-                    conversationId,
-                    'twin',
-                    response.content + '\n\n[Requesting professional assistance...]'
-                );
-
-                return {
-                    message: savedMessage,
-                    handoverTriggered: true,
-                    reason: handoverCheck.reason || undefined,
-                };
-            }
-
             const savedMessage = await this.sendMessage(conversationId, 'twin', response.content);
 
             await this.trackAnalyticsEvent(conversation.twin_id, 'message_sent', {
                 conversation_id: conversationId,
-                confidence: handoverCheck.confidence,
             });
 
             return {
                 message: savedMessage,
-                handoverTriggered: false,
             };
         } catch (error) {
             logger.error('Generate twin response streaming error:', error);
-            throw error;
-        }
-    }
-
-    async triggerHandover(conversationId: string, reason: string): Promise<void> {
-        try {
-            await db.query(
-                'UPDATE conversations SET status = $1, handed_over_at = NOW() WHERE id = $2',
-                ['handed_over', conversationId]
-            );
-
-            const result = await db.query(
-                `SELECT dt.user_id, c.twin_id FROM conversations c
-         JOIN digital_twins dt ON c.twin_id = dt.id
-         WHERE c.id = $1`,
-                [conversationId]
-            );
-
-            if (result.rows.length === 0) {
-                throw new Error('Conversation not found');
-            }
-
-            const { user_id, twin_id } = result.rows[0];
-
-            await db.query(
-                'INSERT INTO handover_notifications (conversation_id, user_id, reason) VALUES ($1, $2, $3)',
-                [conversationId, user_id, reason]
-            );
-
-            await this.trackAnalyticsEvent(twin_id, 'handover_triggered', {
-                conversation_id: conversationId,
-                reason,
-            });
-
-            logger.info(`Handover triggered for conversation ${conversationId}`);
-        } catch (error) {
-            logger.error('Trigger handover error:', error);
-            throw error;
-        }
-    }
-
-    async getHandoverNotifications(userId: string, unreadOnly = false): Promise<Array<Record<string, unknown>>> {
-        try {
-            let query = `
-        SELECT hn.*, c.*, eu.name as end_user_name, eu.email as end_user_email
-        FROM handover_notifications hn
-        JOIN conversations c ON hn.conversation_id = c.id
-        JOIN end_users eu ON c.end_user_id = eu.id
-        WHERE hn.user_id = $1
-      `;
-
-            if (unreadOnly) {
-                query += ' AND hn.is_read = false';
-            }
-
-            query += ' ORDER BY hn.created_at DESC';
-
-            const result = await db.query(query, [userId]);
-            return result.rows;
-        } catch (error) {
-            logger.error('Get handover notifications error:', error);
-            throw error;
-        }
-    }
-
-    async acceptHandover(notificationId: string, userId: string): Promise<Record<string, unknown>> {
-        try {
-            const result = await db.query(
-                `UPDATE handover_notifications
-         SET is_read = true, is_accepted = true, accepted_at = NOW()
-         WHERE id = $1 AND user_id = $2
-         RETURNING *`,
-                [notificationId, userId]
-            );
-
-            if (result.rows.length === 0) {
-                throw new Error('Notification not found');
-            }
-
-            return result.rows[0];
-        } catch (error) {
-            logger.error('Accept handover error:', error);
             throw error;
         }
     }

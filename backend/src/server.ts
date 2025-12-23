@@ -7,10 +7,12 @@ import logger from './config/logger';
 import errorHandler from './middleware/errorHandler';
 import { generalLimiter } from './middleware/rateLimiter';
 import websocketService from './services/websocketService';
+import passport from './config/passport';
 
 // Import routes
 import authRoutes from './routes/authRoutes';
-import digitalTwinRoutes from './routes/digitalTwinRoutes';
+import oauthRoutes from './routes/oauthRoutes';
+import knowledgeBaseRoutes from './routes/knowledgeBaseRoutes';
 import chatRoutes from './routes/chatRoutes';
 import emailRoutes from './routes/emailRoutes';
 import benchmarkRoutes from './routes/benchmarkRoutes';
@@ -32,6 +34,7 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(passport.initialize());
 app.use(generalLimiter);
 
 // Health check
@@ -41,7 +44,8 @@ app.get('/health', (req: Request, res: Response) => {
 
 // API Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/digital-twins', digitalTwinRoutes);
+app.use('/api/oauth', oauthRoutes);
+app.use('/api/knowledge-bases', knowledgeBaseRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/email', emailRoutes);
 app.use('/api/benchmark', benchmarkRoutes);

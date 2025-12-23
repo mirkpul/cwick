@@ -10,10 +10,7 @@ router.post('/conversations/:twinId/start', chatLimiter, chatController.startCon
 router.post('/conversations/:conversationId/messages', chatLimiter, chatController.sendMessage.bind(chatController));
 router.get('/conversations/:conversationId/messages', chatController.getMessages.bind(chatController));
 
-// Protected routes (for professionals managing conversations)
+// Protected routes (for KB owners managing conversations)
 router.get('/my-conversations', auth, chatController.getMyConversations.bind(chatController));
-router.get('/handovers', auth, chatController.getHandovers.bind(chatController));
-router.post('/handovers/:notificationId/accept', auth, chatController.acceptHandover.bind(chatController));
-router.post('/conversations/:conversationId/professional-message', auth, chatController.sendProfessionalMessage.bind(chatController));
 
 export default router;

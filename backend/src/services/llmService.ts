@@ -1,11 +1,12 @@
 import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { LLMClient } from '@virtualcoach/sdk';
 import type { GenerateResponseRequest, GenerateEmbeddingRequest } from '@virtualcoach/shared-types';
 import logger from '../config/logger';
 import config from '../config/appConfig';
 
-export type LLMProvider = 'openai' | 'anthropic';
+export type LLMProvider = 'openai' | 'anthropic' | 'gemini';
 
 export interface LLMMessage {
     role: 'system' | 'user' | 'assistant';
@@ -16,12 +17,6 @@ export interface LLMMessage {
 export interface LLMResponse {
     content: string;
     metadata: Record<string, unknown>;
-}
-
-export interface HandoverParams {
-    shouldHandover: boolean;
-    confidence: number;
-    reason: string | null;
 }
 
 export interface DescribeImageFromBufferOptions {
@@ -66,6 +61,7 @@ type AnthropicMessagesClient = {
 class LLMService {
     private openai: OpenAI;
     private anthropic: Anthropic;
+    private gemini: GoogleGenerativeAI;
     private charactersPerToken: number;
     private gatewayClient: LLMClient;
 
@@ -76,6 +72,7 @@ class LLMService {
         this.anthropic = new Anthropic({
             apiKey: process.env.ANTHROPIC_API_KEY,
         });
+        this.gemini = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
         this.charactersPerToken = config.chunking.charactersPerToken || 4;
         this.gatewayClient = new LLMClient({
             baseURL: process.env.LLM_GATEWAY_URL || 'http://localhost:3012',
@@ -242,6 +239,70 @@ class LLMService {
         };
     }
 
+    private async generateGeminiResponse(
+        model: string,
+        messages: LLMMessage[],
+        systemPrompt: string | undefined,
+        temperature: number,
+        maxTokens: number
+    ): Promise<LLMResponse> {
+        const effectiveSystemPrompt = systemPrompt || 'You are a helpful assistant.';
+
+        // Gemini doesn't support a separate system message, so we prepend it to the first user message
+        const formattedMessages = messages.map((msg, index) => {
+            const role = msg.sender === 'user' || msg.role === 'user' ? 'user' : 'model';
+            let content = msg.content;
+
+            // Prepend system prompt to first user message
+            if (index === 0 && role === 'user') {
+                content = `${effectiveSystemPrompt}\n\n${content}`;
+            }
+
+            return {
+                role,
+                parts: [{ text: content }],
+            };
+        });
+
+        logger.debug('Gemini request', {
+            model: model || 'gemini-pro',
+            messageCount: formattedMessages.length,
+            systemPromptLength: effectiveSystemPrompt.length,
+            temperature,
+            maxTokens,
+        });
+
+        const geminiModel = this.gemini.getGenerativeModel({
+            model: model || 'gemini-pro',
+            generationConfig: {
+                temperature,
+                maxOutputTokens: maxTokens,
+            },
+        });
+
+        const chat = geminiModel.startChat({
+            history: formattedMessages.slice(0, -1), // All messages except the last one
+        });
+
+        const lastMessage = formattedMessages[formattedMessages.length - 1];
+        const result = await chat.sendMessage(lastMessage.parts[0].text);
+        const response = result.response;
+        const text = response.text();
+
+        logger.debug('Gemini response', {
+            model: model || 'gemini-pro',
+            contentLength: text.length,
+        });
+
+        return {
+            content: text,
+            metadata: {
+                model: model || 'gemini-pro',
+                candidatesCount: response.candidates?.length || 0,
+            },
+        };
+    }
+
     async generateStreamingResponse(
         provider: LLMProvider,
         model: string,
@@ -260,6 +321,8 @@ class LLMService {
                     return await this.generateOpenAIStreamingResponse(model, messages, systemPrompt, onChunk, temp, maxTok);
                 case 'anthropic':
                     return await this.generateAnthropicStreamingResponse(model, messages, systemPrompt, onChunk, temp, maxTok);
+                case 'gemini':
+                    return await this.generateGeminiStreamingResponse(model, messages, systemPrompt, onChunk, temp, maxTok);
                 default:
                     throw new Error(`Unsupported LLM provider: ${provider}`);
             }
@@ -399,27 +462,77 @@ class LLMService {
         };
     }
 
-    async checkConfidenceForHandover(response: LLMResponse, threshold: number = config.handover.defaultThreshold): Promise<HandoverParams> {
-        const uncertaintyPhrases = [
-            "i'm not sure",
-            "i don't know",
-            "i cannot",
-            "i'm unable",
-            "beyond my knowledge",
-            "need to ask",
-            "should speak with",
-            "contact directly",
-        ];
+    private async generateGeminiStreamingResponse(
+        model: string,
+        messages: LLMMessage[],
+        systemPrompt: string,
+        onChunk: (chunk: string) => Promise<void>,
+        temperature: number,
+        maxTokens: number
+    ): Promise<LLMResponse> {
+        const effectiveSystemPrompt = systemPrompt || 'You are a helpful assistant.';
 
-        const content = response.content.toLowerCase();
-        const hasUncertainty = uncertaintyPhrases.some(phrase => content.includes(phrase));
+        // Gemini doesn't support a separate system message, so we prepend it to the first user message
+        const formattedMessages = messages.map((msg, index) => {
+            const role = msg.sender === 'user' || msg.role === 'user' ? 'user' : 'model';
+            let content = msg.content;
 
-        const confidence = hasUncertainty ? 0.3 : 0.8;
+            // Prepend system prompt to first user message
+            if (index === 0 && role === 'user') {
+                content = `${effectiveSystemPrompt}\n\n${content}`;
+            }
+
+            return {
+                role,
+                parts: [{ text: content }],
+            };
+        });
+
+        logger.debug('Gemini streaming request', {
+            model: model || 'gemini-pro',
+            messageCount: formattedMessages.length,
+            systemPromptLength: effectiveSystemPrompt.length,
+            temperature,
+            maxTokens,
+        });
+
+        const geminiModel = this.gemini.getGenerativeModel({
+            model: model || 'gemini-pro',
+            generationConfig: {
+                temperature,
+                maxOutputTokens: maxTokens,
+            },
+        });
+
+        const chat = geminiModel.startChat({
+            history: formattedMessages.slice(0, -1), // All messages except the last one
+        });
+
+        const lastMessage = formattedMessages[formattedMessages.length - 1];
+        const result = await chat.sendMessageStream(lastMessage.parts[0].text);
+
+        let fullContent = '';
+        let chunkCount = 0;
+
+        for await (const chunk of result.stream) {
+            const text = chunk.text();
+            if (text) {
+                fullContent += text;
+                chunkCount++;
+                await onChunk(text);
+            }
+        }
+
+        logger.debug('Gemini streaming response completed', {
+            totalChunks: chunkCount,
+            contentLength: fullContent.length,
+        });
 
         return {
-            shouldHandover: confidence < threshold,
-            confidence,
-            reason: hasUncertainty ? 'AI detected uncertainty in response' : null,
+            content: fullContent,
+            metadata: {
+                model: model || 'gemini-pro',
+            },
         };
     }
 
