@@ -51,7 +51,7 @@ interface LoginData {
   password: string;
 }
 
-interface DigitalTwinData {
+interface KnowledgeBaseData {
   name?: string;
   description?: string;
   system_prompt?: string;
@@ -85,7 +85,7 @@ interface MessageData {
 }
 
 interface DatasetData {
-  twin_id: string;
+  kb_id: string;
   name: string;
   description?: string;
 }
@@ -103,7 +103,7 @@ interface GenerateOptions {
 }
 
 interface GenerateDatasetData {
-  twin_id: string;
+  kb_id: string;
   name: string;
   count?: number;
 }
@@ -160,56 +160,53 @@ export const authAPI = {
   getMe: (): Promise<AxiosResponse> => api.get('/auth/me'),
 };
 
-// Digital Twin API
-export const digitalTwinAPI = {
-  create: (data: DigitalTwinData): Promise<AxiosResponse> => api.post('/digital-twins', data),
-  getMyTwin: (): Promise<AxiosResponse> => api.get('/digital-twins/me'),
-  update: (twinId: string, data: DigitalTwinData): Promise<AxiosResponse> => api.put(`/digital-twins/${twinId}`, data),
-  addKnowledge: (twinId: string, data: KnowledgeData): Promise<AxiosResponse> => api.post(`/digital-twins/${twinId}/knowledge`, data),
-  getKnowledge: (twinId: string): Promise<AxiosResponse> => api.get(`/digital-twins/${twinId}/knowledge`),
-  deleteKnowledge: (twinId: string, entryId: string): Promise<AxiosResponse> => api.delete(`/digital-twins/${twinId}/knowledge/${entryId}`),
+// Knowledge Base API
+export const knowledgeBaseAPI = {
+  create: (data: KnowledgeBaseData): Promise<AxiosResponse> => api.post('/knowledge-bases', data),
+  getMyKB: (): Promise<AxiosResponse> => api.get('/knowledge-bases/me'),
+  update: (kbId: string, data: KnowledgeBaseData): Promise<AxiosResponse> => api.put(`/knowledge-bases/${kbId}`, data),
+  addKnowledge: (kbId: string, data: KnowledgeData): Promise<AxiosResponse> => api.post(`/knowledge-bases/${kbId}/knowledge`, data),
+  getKnowledge: (kbId: string): Promise<AxiosResponse> => api.get(`/knowledge-bases/${kbId}/knowledge`),
+  deleteKnowledge: (kbId: string, entryId: string): Promise<AxiosResponse> => api.delete(`/knowledge-bases/${kbId}/knowledge/${entryId}`),
 
   // File upload endpoints
-  uploadKnowledgeFile: (twinId: string, formData: FormData, onUploadProgress?: (progressEvent: AxiosProgressEvent) => void): Promise<AxiosResponse> =>
-    api.post(`/digital-twins/${twinId}/knowledge/upload`, formData, {
+  uploadKnowledgeFile: (kbId: string, formData: FormData, onUploadProgress?: (progressEvent: AxiosProgressEvent) => void): Promise<AxiosResponse> =>
+    api.post(`/knowledge-bases/${kbId}/knowledge/upload`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
       onUploadProgress,
     }),
-  listKnowledgeFiles: (twinId: string): Promise<AxiosResponse> => api.get(`/digital-twins/${twinId}/knowledge/files`),
-  deleteKnowledgeFile: (twinId: string, entryId: string): Promise<AxiosResponse> => api.delete(`/digital-twins/${twinId}/knowledge/file/${entryId}`),
-  searchKnowledge: (twinId: string, query: string, limit = 10): Promise<AxiosResponse> =>
-    api.get(`/digital-twins/${twinId}/knowledge/search`, {
+  listKnowledgeFiles: (kbId: string): Promise<AxiosResponse> => api.get(`/knowledge-bases/${kbId}/knowledge/files`),
+  deleteKnowledgeFile: (kbId: string, entryId: string): Promise<AxiosResponse> => api.delete(`/knowledge-bases/${kbId}/knowledge/file/${entryId}`),
+  searchKnowledge: (kbId: string, query: string, limit = 10): Promise<AxiosResponse> =>
+    api.get(`/knowledge-bases/${kbId}/knowledge/search`, {
       params: { q: query, limit }
     }),
 
   // RAG Configuration endpoints
-  getRAGConfig: (twinId: string): Promise<AxiosResponse> => api.get(`/digital-twins/${twinId}/rag-config`),
-  updateRAGConfig: (twinId: string, config: RAGConfig): Promise<AxiosResponse> => api.put(`/digital-twins/${twinId}/rag-config`, config),
+  getRAGConfig: (kbId: string): Promise<AxiosResponse> => api.get(`/knowledge-bases/${kbId}/rag-config`),
+  updateRAGConfig: (kbId: string, config: RAGConfig): Promise<AxiosResponse> => api.put(`/knowledge-bases/${kbId}/rag-config`, config),
 };
 
 // Chat API
 export const chatAPI = {
-  startConversation: (twinId: string, data: ConversationStartData): Promise<AxiosResponse> => api.post(`/chat/conversations/${twinId}/start`, data),
+  startConversation: (kbId: string, data: ConversationStartData): Promise<AxiosResponse> => api.post(`/chat/conversations/${kbId}/start`, data),
   sendMessage: (conversationId: string, data: MessageData): Promise<AxiosResponse> => api.post(`/chat/conversations/${conversationId}/messages`, data),
   getMessages: (conversationId: string, limit?: number): Promise<AxiosResponse> => api.get(`/chat/conversations/${conversationId}/messages`, { params: { limit } }),
   getMyConversations: (): Promise<AxiosResponse> => api.get('/chat/my-conversations'),
-  getHandovers: (unreadOnly?: boolean): Promise<AxiosResponse> => api.get('/chat/handovers', { params: { unreadOnly } }),
-  acceptHandover: (notificationId: string): Promise<AxiosResponse> => api.post(`/chat/handovers/${notificationId}/accept`),
-  sendProfessionalMessage: (conversationId: string, data: MessageData): Promise<AxiosResponse> => api.post(`/chat/conversations/${conversationId}/professional-message`, data),
 };
 
 // Benchmark API
 export const benchmarkAPI = {
   // Datasets
   createDataset: (data: DatasetData): Promise<AxiosResponse> => api.post('/benchmark/datasets', data),
-  listDatasets: (twinId: string): Promise<AxiosResponse> => api.get('/benchmark/datasets', { params: { twinId } }),
+  listDatasets: (kbId: string): Promise<AxiosResponse> => api.get('/benchmark/datasets', { params: { kbId } }),
   getDataset: (datasetId: string): Promise<AxiosResponse> => api.get(`/benchmark/datasets/${datasetId}`),
   updateDataset: (datasetId: string, data: Partial<DatasetData>): Promise<AxiosResponse> => api.put(`/benchmark/datasets/${datasetId}`, data),
   deleteDataset: (datasetId: string): Promise<AxiosResponse> => api.delete(`/benchmark/datasets/${datasetId}`),
   exportDataset: (datasetId: string): Promise<AxiosResponse> => api.get(`/benchmark/datasets/${datasetId}/export`),
-  importDataset: (twinId: string, data: unknown): Promise<AxiosResponse> => api.post('/benchmark/datasets/import', { twinId, data }),
+  importDataset: (kbId: string, data: unknown): Promise<AxiosResponse> => api.post('/benchmark/datasets/import', { kbId, data }),
 
   // Questions
   addQuestion: (datasetId: string, data: QuestionData): Promise<AxiosResponse> => api.post(`/benchmark/datasets/${datasetId}/questions`, data),
@@ -224,7 +221,7 @@ export const benchmarkAPI = {
 
   // Runs
   createRun: (data: RunData): Promise<AxiosResponse> => api.post('/benchmark/runs', data),
-  listRuns: (twinId: string): Promise<AxiosResponse> => api.get('/benchmark/runs', { params: { twinId } }),
+  listRuns: (kbId: string): Promise<AxiosResponse> => api.get('/benchmark/runs', { params: { kbId } }),
   getRun: (runId: string): Promise<AxiosResponse> => api.get(`/benchmark/runs/${runId}`),
   startRun: (runId: string): Promise<AxiosResponse> => api.post(`/benchmark/runs/${runId}/start`),
   cancelRun: (runId: string): Promise<AxiosResponse> => api.post(`/benchmark/runs/${runId}/cancel`),
@@ -273,5 +270,8 @@ export const webScrapingAPI = {
       responseType: 'blob',
     }),
 };
+
+// Backwards compatibility alias (DEPRECATED - use knowledgeBaseAPI instead)
+export const digitalTwinAPI = knowledgeBaseAPI;
 
 export default api;
