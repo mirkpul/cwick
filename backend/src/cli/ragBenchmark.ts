@@ -34,7 +34,7 @@ interface DatasetCLI {
   is_active: boolean;
   created_at: string;
   active_questions?: number;
-  twin_id: string;
+  kb_id: string;
   total_questions?: number;
 }
 
@@ -147,7 +147,7 @@ datasetCmd
   .command('create')
   .description('Create a new benchmark dataset')
   .requiredOption('--name <name>', 'Dataset name')
-  .requiredOption('--twin <twinId>', 'Digital Twin ID')
+  .requiredOption('--twin <kbId>', 'Knowledge Base ID')
   .option('--type <type>', 'Dataset type (golden|synthetic|hybrid)', 'golden')
   .option('--description <desc>', 'Dataset description')
   .action(async (options: { name: string; twin: string; type: string; description?: string }) => {
@@ -181,7 +181,7 @@ datasetCmd
 datasetCmd
   .command('list')
   .description('List datasets for a twin')
-  .requiredOption('--twin <twinId>', 'Digital Twin ID')
+  .requiredOption('--twin <kbId>', 'Knowledge Base ID')
   .option('--all', 'Include inactive datasets')
   .action(async (options: { twin: string; all?: boolean }) => {
     try {
@@ -291,7 +291,7 @@ datasetCmd
 datasetCmd
   .command('import')
   .description('Import dataset from JSON file')
-  .requiredOption('--twin <twinId>', 'Digital Twin ID')
+  .requiredOption('--twin <kbId>', 'Knowledge Base ID')
   .requiredOption('--file <path>', 'JSON file path')
   .action(async (options: { twin: string; file: string }) => {
     try {
@@ -366,7 +366,7 @@ datasetCmd
       };
 
       const generated = await syntheticGeneratorService.default.generateFromKnowledgeBase(
-        dataset.twin_id,
+        dataset.kb_id,
         { count, types, difficulties, onProgress }
       );
 
@@ -413,7 +413,7 @@ runCmd
   .option('--type <type>', 'Run type (full|retrieval_only|generation_only)', 'full')
   .action(async (options: { dataset: string; name?: string; type: string }) => {
     try {
-      // Get dataset to find twin_id
+      // Get dataset to find kb_id
       const dataset = await datasetService.getDataset(options.dataset);
       if (!dataset) {
         console.error('❌ Dataset not found');
@@ -421,7 +421,7 @@ runCmd
         process.exit(1);
       }
 
-      const run = await testRunnerService.createRun(dataset.twin_id, options.dataset, {
+      const run = await testRunnerService.createRun(dataset.kb_id, options.dataset, {
         name: options.name || `Run ${new Date().toISOString().slice(0, 16)}`,
         runType: options.type
       });
@@ -446,7 +446,7 @@ runCmd
 runCmd
   .command('list')
   .description('List runs for a twin')
-  .requiredOption('--twin <twinId>', 'Digital Twin ID')
+  .requiredOption('--twin <kbId>', 'Knowledge Base ID')
   .option('--status <status>', 'Filter by status')
   .option('--limit <n>', 'Limit results', '10')
   .action(async (options: { twin: string; status?: string; limit: string }) => {

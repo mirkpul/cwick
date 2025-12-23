@@ -220,7 +220,7 @@ class FileProcessingService {
      * Extracts text, chunks it, generates embeddings, and stores in database
      */
     async processFileForKnowledgeBase(
-        twinId: string,
+        kbId: string,
         file: Express.Multer.File,
         options: FileProcessingOptions = {}
     ): Promise<ProcessFileResult> {
@@ -232,7 +232,7 @@ class FileProcessingService {
                 useSemanticChunking = config.semanticChunking.enabled,
             } = options;
 
-            logger.info(`Processing file for twin ${twinId}: ${file.originalname}`);
+            logger.info(`Processing file for twin ${kbId}: ${file.originalname}`);
             logger.info(`Using ${useSemanticChunking ? 'semantic' : 'character-based'} chunking`);
 
             const isImageOnly = VisualExtractionService.isImageMimeType(file.mimetype);
@@ -421,7 +421,7 @@ class FileProcessingService {
 
                 const insertResult: QueryResult<KnowledgeBaseEntry> = await db.query<KnowledgeBaseEntry>(
                     `INSERT INTO knowledge_base (
-            twin_id,
+            kb_id,
             title,
             content,
             content_type,
@@ -435,7 +435,7 @@ class FileProcessingService {
           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
           RETURNING id`,
                     [
-                        twinId,
+                        kbId,
                         `${file.originalname} - Part ${chunk.index + 1}`,
                         chunk.text,
                         'document',
@@ -460,7 +460,7 @@ class FileProcessingService {
                     id: String(insertResult.rows[0].id),
                     vector: embedding,
                     metadata: {
-                        twinId,
+                        kbId,
                         source: 'knowledge_base',
                         fileName: file.originalname,
                         contentType: chunk.contentType || 'document',
@@ -489,7 +489,7 @@ class FileProcessingService {
     /**
      * Search knowledge base using semantic similarity
      */
-    async searchKnowledgeBase(twinId: string, query: string, options: SearchOptions = {}): Promise<SearchResult[]> {
+    async searchKnowledgeBase(kbId: string, query: string, options: SearchOptions = {}): Promise<SearchResult[]> {
         try {
             const { limit = 10, provider = 'openai', conversationHistory = [] } = options;
 
@@ -541,10 +541,10 @@ class FileProcessingService {
           'knowledge_base' as source,
           1 - (embedding <=> $2::vector) as similarity
         FROM knowledge_base
-        WHERE twin_id = $1 AND embedding IS NOT NULL
+        WHERE kb_id = $1 AND embedding IS NOT NULL
         ORDER BY embedding <=> $2::vector
         LIMIT $3`,
-                [twinId, embeddingVector, limit]
+                [kbId, embeddingVector, limit]
             );
 
             // Log results
@@ -553,7 +553,7 @@ class FileProcessingService {
             if (searchQuery !== query) {
                 console.log(`Enhanced Query: "${searchQuery}"`);
             }
-            console.log(`Twin ID: ${twinId}`);
+            console.log(`Twin ID: ${kbId}`);
             console.log(`Found ${result.rows.length} results:`);
             result.rows.forEach((r, idx) => {
                 console.log(`\n[${idx + 1}] Score: ${r.similarity.toFixed(4)} | Title: ${r.title}`);
@@ -573,13 +573,13 @@ class FileProcessingService {
      * Search knowledge base with adaptive filtering to handle embedding score compression
      */
     async searchKnowledgeBaseWithAdaptiveFiltering(
-        twinId: string,
+        kbId: string,
         query: string,
         options: SearchOptions = {}
     ): Promise<SearchResult[]> {
         // Input validation
-        if (!twinId || typeof twinId !== 'string' || twinId.trim().length === 0) {
-            throw new Error('Invalid twinId: must be a non-empty string');
+        if (!kbId || typeof kbId !== 'string' || kbId.trim().length === 0) {
+            throw new Error('Invalid kbId: must be a non-empty string');
         }
 
         if (!query || typeof query !== 'string' || query.trim().length === 0) {
@@ -604,7 +604,7 @@ class FileProcessingService {
             }
 
             // Fetch more results for statistical analysis
-            const rawResults = await this.searchKnowledgeBase(twinId, query, {
+            const rawResults = await this.searchKnowledgeBase(kbId, query, {
                 limit: config.semanticSearch.internalSearchLimit,
                 provider,
             });
@@ -1421,14 +1421,14 @@ class FileProcessingService {
     /**
      * Delete file and all its chunks from knowledge base
      */
-    async deleteFileFromKnowledgeBase(twinId: string, entryId: string): Promise<{ success: boolean; deletedChunks: number }> {
+    async deleteFileFromKnowledgeBase(kbId: string, entryId: string): Promise<{ success: boolean; deletedChunks: number }> {
         try {
             // Find the parent entry (chunk_index = 0) or use provided entry
             const parentQuery = await db.query(
                 `SELECT id, parent_entry_id, chunk_index
          FROM knowledge_base
-         WHERE id = $1 AND twin_id = $2`,
-                [entryId, twinId]
+         WHERE id = $1 AND kb_id = $2`,
+                [entryId, kbId]
             );
 
             if (parentQuery.rows.length === 0) {
@@ -1441,9 +1441,9 @@ class FileProcessingService {
             // Delete parent and all children
             const deleteResult = await db.query(
                 `DELETE FROM knowledge_base
-         WHERE twin_id = $1 AND (id = $2 OR parent_entry_id = $2)
+         WHERE kb_id = $1 AND (id = $2 OR parent_entry_id = $2)
          RETURNING id`,
-                [twinId, parentId]
+                [kbId, parentId]
             );
 
             logger.info(`Deleted ${deleteResult.rows.length} chunks for entry ${parentId}`);
@@ -1461,7 +1461,7 @@ class FileProcessingService {
     /**
      * List all uploaded files for a twin
      */
-    async listFilesForTwin(twinId: string): Promise<KnowledgeFile[]> {
+    async listFilesForTwin(kbId: string): Promise<KnowledgeFile[]> {
         try {
             const result = await db.query<KnowledgeFile>(
                 `SELECT DISTINCT ON (file_name)
@@ -1472,9 +1472,9 @@ class FileProcessingService {
           total_chunks,
           created_at
         FROM knowledge_base
-        WHERE twin_id = $1 AND file_name IS NOT NULL AND chunk_index = 0
+        WHERE kb_id = $1 AND file_name IS NOT NULL AND chunk_index = 0
         ORDER BY file_name, created_at DESC`,
-                [twinId]
+                [kbId]
             );
 
             return result.rows;

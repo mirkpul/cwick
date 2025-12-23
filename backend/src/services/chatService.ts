@@ -35,7 +35,7 @@ interface Message {
 
 interface Conversation {
     id: string;
-    twin_id: string;
+    kb_id: string;
     user_id: string;
     status: string;
     llm_provider: string;
@@ -66,8 +66,6 @@ interface RAGSearchResult {
 
 interface TwinResponse {
     message?: Record<string, unknown>;
-    shouldRespond?: boolean;
-    reason?: string;
 }
 
 class ChatService {
@@ -132,7 +130,7 @@ class ChatService {
         return selected.slice(0, limit);
     }
 
-    async createConversation(twinId: string, endUserData: EndUserData): Promise<Record<string, unknown>> {
+    async createConversation(kbId: string, endUserData: EndUserData): Promise<Record<string, unknown>> {
         try {
             let endUserId: string;
             if (endUserData.email) {
@@ -159,11 +157,11 @@ class ChatService {
             }
 
             const result = await db.query(
-                'INSERT INTO conversations (twin_id, end_user_id, metadata) VALUES ($1, $2, $3) RETURNING *',
-                [twinId, endUserId, JSON.stringify(endUserData.metadata || {})]
+                'INSERT INTO conversations (kb_id, end_user_id, metadata) VALUES ($1, $2, $3) RETURNING *',
+                [kbId, endUserId, JSON.stringify(endUserData.metadata || {})]
             );
 
-            await this.trackAnalyticsEvent(twinId, 'conversation_started', {
+            await this.trackAnalyticsEvent(kbId, 'conversation_started', {
                 conversation_id: result.rows[0].id,
             });
 
@@ -218,14 +216,14 @@ class ChatService {
         }
     }
 
-    async getKnowledgeBase(twinId: string, limit = 50): Promise<KnowledgeBaseEntry[]> {
+    async getKnowledgeBase(kbId: string, limit = 50): Promise<KnowledgeBaseEntry[]> {
         try {
             const result = await db.query<KnowledgeBaseEntry>(
                 `SELECT * FROM knowledge_base
-         WHERE twin_id = $1
+         WHERE kb_id = $1
          ORDER BY created_at DESC
          LIMIT $2`,
-                [twinId, limit]
+                [kbId, limit]
             );
 
             return result.rows;
@@ -240,8 +238,8 @@ class ChatService {
             logger.debug('Generating twin response', { conversationId });
 
             const convResult = await db.query(
-                `SELECT c.*, dt.* FROM conversations c
-         JOIN digital_twins dt ON c.twin_id = dt.id
+                `SELECT c.*, kb.* FROM conversations c
+         JOIN knowledge_bases kb ON c.kb_id = kb.id
          WHERE c.id = $1`,
                 [conversationId]
             );
@@ -260,7 +258,7 @@ class ChatService {
                 conversationId,
                 messageCount: messages.length,
                 isFirstMessage,
-                twinId: conversation.twin_id,
+                kbId: conversation.kb_id,
                 twinName: conversation.name,
             });
 
@@ -268,7 +266,7 @@ class ChatService {
             const lastUserMessage = [...messages].reverse().find((m) => m.sender === 'user');
             const userQuery = lastUserMessage?.content;
 
-            if (userQuery && conversation.twin_id) {
+            if (userQuery && conversation.kb_id) {
                 try {
                     semanticResults = await this.performEnhancedRAGSearch(
                         conversation,
@@ -285,7 +283,7 @@ class ChatService {
             const semanticContext = this.buildSemanticResults(semanticResults);
 
             if (isFirstMessage) {
-                const knowledgeBase = await this.getKnowledgeBase(conversation.twin_id);
+                const knowledgeBase = await this.getKnowledgeBase(conversation.kb_id);
                 systemPrompt = contextService.generateEnhancedSystemPrompt(
                     conversation,
                     knowledgeBase,
@@ -325,9 +323,9 @@ class ChatService {
                 finishReason
             );
 
-            const savedMessage = await this.sendMessage(conversationId, 'twin', response.content);
+            const savedMessage = await this.sendMessage(conversationId, 'assistant', response.content);
 
-            await this.trackAnalyticsEvent(conversation.twin_id, 'message_sent', {
+            await this.trackAnalyticsEvent(conversation.kb_id, 'message_sent', {
                 conversation_id: conversationId,
             });
 
@@ -349,8 +347,8 @@ class ChatService {
             logger.debug('Generating twin response (streaming)', { conversationId });
 
             const convResult = await db.query(
-                `SELECT c.*, dt.* FROM conversations c
-         JOIN digital_twins dt ON c.twin_id = dt.id
+                `SELECT c.*, kb.* FROM conversations c
+         JOIN knowledge_bases kb ON c.kb_id = kb.id
          WHERE c.id = $1`,
                 [conversationId]
             );
@@ -361,13 +359,6 @@ class ChatService {
 
             const conversation = convResult.rows[0] as Conversation;
 
-            if (conversation.status === 'handed_over') {
-                return {
-                    shouldRespond: false,
-                    reason: 'Conversation is in handover mode',
-                };
-            }
-
             const messageHistoryLimit = config.conversations.messageHistoryLimit || 10;
             const messages = await this.getConversationMessages(conversationId, messageHistoryLimit);
             const isFirstMessage = messages.length === 0;
@@ -376,7 +367,7 @@ class ChatService {
             const lastUserMessage = [...messages].reverse().find((m) => m.sender === 'user');
             const userQuery = lastUserMessage?.content;
 
-            if (userQuery && conversation.twin_id) {
+            if (userQuery && conversation.kb_id) {
                 try {
                     semanticResults = await this.performEnhancedRAGSearch(
                         conversation,
@@ -393,7 +384,7 @@ class ChatService {
             const semanticContext = this.buildSemanticResults(semanticResults);
 
             if (isFirstMessage) {
-                const knowledgeBase = await this.getKnowledgeBase(conversation.twin_id);
+                const knowledgeBase = await this.getKnowledgeBase(conversation.kb_id);
                 systemPrompt = contextService.generateEnhancedSystemPrompt(
                     conversation,
                     knowledgeBase,
@@ -419,9 +410,9 @@ class ChatService {
                 conversation.max_tokens
             );
 
-            const savedMessage = await this.sendMessage(conversationId, 'twin', response.content);
+            const savedMessage = await this.sendMessage(conversationId, 'assistant', response.content);
 
-            await this.trackAnalyticsEvent(conversation.twin_id, 'message_sent', {
+            await this.trackAnalyticsEvent(conversation.kb_id, 'message_sent', {
                 conversation_id: conversationId,
             });
 
@@ -434,18 +425,18 @@ class ChatService {
         }
     }
 
-    async trackAnalyticsEvent(twinId: string, eventType: string, eventData: Record<string, unknown>): Promise<void> {
+    async trackAnalyticsEvent(kbId: string, eventType: string, eventData: Record<string, unknown>): Promise<void> {
         try {
             await db.query(
-                'INSERT INTO analytics_events (twin_id, event_type, event_data) VALUES ($1, $2, $3)',
-                [twinId, eventType, JSON.stringify(eventData)]
+                'INSERT INTO analytics_events (kb_id, event_type, event_data) VALUES ($1, $2, $3)',
+                [kbId, eventType, JSON.stringify(eventData)]
             );
         } catch (error) {
             logger.error('Track analytics error:', error);
         }
     }
 
-    async getConversationsByTwinId(twinId: string, limit = 20): Promise<Array<Record<string, unknown>>> {
+    async getConversationsByKbId(kbId: string, limit = 20): Promise<Array<Record<string, unknown>>> {
         try {
             const result = await db.query(
                 `SELECT c.*, eu.name as end_user_name, eu.email as end_user_email,
@@ -453,11 +444,11 @@ class ChatService {
          FROM conversations c
          JOIN end_users eu ON c.end_user_id = eu.id
          LEFT JOIN messages m ON c.id = m.conversation_id
-         WHERE c.twin_id = $1
+         WHERE c.kb_id = $1
          GROUP BY c.id, eu.name, eu.email
          ORDER BY c.created_at DESC
          LIMIT $2`,
-                [twinId, limit]
+                [kbId, limit]
             );
 
             return result.rows;
@@ -478,7 +469,7 @@ class ChatService {
         const startTime = Date.now();
 
         try {
-            const ragConfig = (await digitalTwinService.getRAGConfig(conversation.twin_id).catch(() => null)) || {} as RAGConfig;
+            const ragConfig = (await digitalTwinService.getRAGConfig(conversation.kb_id).catch(() => null)) || {} as RAGConfig;
 
             const kbThreshold = ragConfig.knowledgeBaseThreshold ??
                 conversation.semantic_search_threshold ??
@@ -534,7 +525,7 @@ class ChatService {
 
             for (const query of searchQueries) {
                 const kbVectorResults = await fileProcessingService.searchKnowledgeBaseWithAdaptiveFiltering(
-                    conversation.twin_id,
+                    conversation.kb_id,
                     query,
                     {
                         limit: maxResults * 2,
@@ -566,7 +557,7 @@ class ChatService {
 
                 if (useHybridSearch) {
                     const kbBM25Results = await this._performBM25Search(
-                        conversation.twin_id,
+                        conversation.kb_id,
                         conversation.user_id,
                         query,
                         maxResults * 2
@@ -737,14 +728,14 @@ class ChatService {
      * Perform BM25 search on knowledge base and emails
      */
     async _performBM25Search(
-        twinId: string,
+        kbId: string,
         userId: string,
         query: string,
         limit: number
     ): Promise<RAGSearchResult[]> {
         try {
             if (ragRetrievalService.isEnabled()) {
-                const results = await ragRetrievalService.search(query, twinId, userId, limit);
+                const results = await ragRetrievalService.search(query, kbId, userId, limit);
                 return results.map(result => ({
                     id: result.id,
                     content: result.content,
@@ -827,9 +818,9 @@ class ChatService {
             const kbResult = await db.query(
                 `SELECT id, title, content, file_name AS "fileName", chunk_index AS "chunkIndex", content_type AS "contentType", 'knowledge_base' as source
                  FROM knowledge_base
-                 WHERE twin_id = $1
+                 WHERE kb_id = $1
                  LIMIT $2`,
-                [twinId, limit * 2]
+                [kbId, limit * 2]
             );
 
             const emailResult = await db.query(

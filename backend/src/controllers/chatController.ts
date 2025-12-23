@@ -7,23 +7,23 @@ import { AuthenticatedRequest } from '../middleware/auth';
 class ChatController {
   async startConversation(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { twinId } = req.params;
+      const { kbId } = req.params;
       const endUserData = req.body;
 
       if (chatIntegrationService.isEnabled()) {
-        const result = await chatIntegrationService.startConversation(twinId, endUserData);
+        const result = await chatIntegrationService.startConversation(kbId, endUserData);
         res.status(201).json(result);
         return;
       }
 
-      // Verify twin exists and is active
-      const twin = await digitalTwinService.getDigitalTwinById(twinId);
-      if (!twin) {
-        res.status(404).json({ error: 'Digital twin not found' });
+      // Verify knowledge base exists and is active
+      const kb = await digitalTwinService.getDigitalTwinById(kbId);
+      if (!kb) {
+        res.status(404).json({ error: 'Knowledge base not found' });
         return;
       }
 
-      const conversation = await chatService.createConversation(twinId, endUserData);
+      const conversation = await chatService.createConversation(kbId, endUserData);
 
       res.status(201).json({
         message: 'Conversation started',
@@ -56,7 +56,6 @@ class ChatController {
       res.json({
         userMessage,
         twinResponse: twinResponse.message,
-        handoverTriggered: twinResponse.handoverTriggered,
       });
     } catch (error) {
       next(error);
@@ -92,14 +91,14 @@ class ChatController {
         return;
       }
 
-      // Get user's twin
-      const twin = await digitalTwinService.getDigitalTwinByUserId(userId);
-      if (!twin) {
-        res.status(404).json({ error: 'Digital twin not found' });
+      // Get user's knowledge base
+      const kb = await digitalTwinService.getDigitalTwinByUserId(userId);
+      if (!kb) {
+        res.status(404).json({ error: 'Knowledge base not found' });
         return;
       }
 
-      const conversations = await chatService.getConversationsByTwinId(twin.id);
+      const conversations = await chatService.getConversationsByKbId(kb.id);
 
       res.json({ conversations });
     } catch (error) {
@@ -107,73 +106,6 @@ class ChatController {
     }
   }
 
-  async getHandovers(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const userId = req.user!.userId;
-      const unreadOnly = req.query.unreadOnly === 'true';
-
-      if (chatIntegrationService.isEnabled()) {
-        const result = await chatIntegrationService.getHandovers(userId, unreadOnly);
-        res.json(result);
-        return;
-      }
-
-      const notifications = await chatService.getHandoverNotifications(userId, unreadOnly);
-
-      res.json({ notifications });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  async acceptHandover(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const userId = req.user!.userId;
-      const { notificationId } = req.params;
-
-      if (chatIntegrationService.isEnabled()) {
-        const result = await chatIntegrationService.acceptHandover(userId, notificationId);
-        res.json(result);
-        return;
-      }
-
-      const notification = await chatService.acceptHandover(notificationId, userId);
-
-      res.json({
-        message: 'Handover accepted',
-        notification,
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  async sendProfessionalMessage(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const userId = req.user!.userId;
-      const { conversationId } = req.params;
-      const { content } = req.body;
-
-      if (chatIntegrationService.isEnabled()) {
-        const result = await chatIntegrationService.sendProfessionalMessage(userId, conversationId, { content });
-        res.json(result);
-        return;
-      }
-
-      // Verify user owns this conversation's twin
-      const twin = await digitalTwinService.getDigitalTwinByUserId(req.user!.userId);
-      if (!twin) {
-        res.status(403).json({ error: 'Unauthorized' });
-        return;
-      }
-
-      const message = await chatService.sendMessage(conversationId, 'professional', content);
-
-      res.json({ message });
-    } catch (error) {
-      next(error);
-    }
-  }
 }
 
 export default new ChatController();

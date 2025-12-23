@@ -74,14 +74,6 @@ class WebSocketService {
         await this.handleSendMessage(ws, payload);
         break;
 
-      case 'professional_takeover':
-        await this.handleProfessionalTakeover(ws, payload);
-        break;
-
-      case 'professional_message':
-        await this.handleProfessionalMessage(ws, payload);
-        break;
-
       default:
         ws.send(JSON.stringify({ type: 'error', message: 'Unknown message type' }));
     }
@@ -171,7 +163,7 @@ class WebSocketService {
         type: 'streaming_start',
         payload: {
           messageId: streamingMessageId,
-          sender: 'twin',
+          sender: 'assistant',
         },
       });
 
@@ -199,116 +191,12 @@ class WebSocketService {
           message: twinResponse.message,
         },
       });
-
-      // If handover triggered, notify professional
-      if (twinResponse.handoverTriggered) {
-        await this.notifyProfessionalHandover(conversationId, twinResponse.reason || '');
-      }
     } catch (error) {
       logger.error('Send message error:', error);
       ws.send(JSON.stringify({ type: 'error', message: (error as Error).message }));
     }
   }
 
-  async handleProfessionalTakeover(ws: CustomWebSocket, payload: MessagePayload): Promise<void> {
-    try {
-      const { conversationId, notificationId } = payload;
-
-      if (!ws.isAuthenticated || ws.role !== 'professional') {
-        ws.send(JSON.stringify({ type: 'error', message: 'Unauthorized' }));
-        return;
-      }
-
-      if (!conversationId || !notificationId || !ws.userId) {
-        throw new Error('Missing required fields');
-      }
-
-      // Accept handover
-      await chatService.acceptHandover(notificationId, ws.userId);
-
-      // Join conversation
-      if (!this.clients.has(conversationId)) {
-        this.clients.set(conversationId, new Set());
-      }
-      this.clients.get(conversationId)!.add(ws);
-      ws.conversationId = conversationId;
-
-      // Notify end-user
-      this.broadcastToConversation(conversationId, {
-        type: 'professional_joined',
-        payload: { message: 'A professional has joined the conversation' },
-      }, ws);
-
-      ws.send(JSON.stringify({
-        type: 'takeover_successful',
-        payload: { conversationId },
-      }));
-
-      logger.info(`Professional ${ws.userId} took over conversation ${conversationId}`);
-    } catch (error) {
-      logger.error('Professional takeover error:', error);
-      ws.send(JSON.stringify({ type: 'error', message: (error as Error).message }));
-    }
-  }
-
-  async handleProfessionalMessage(ws: CustomWebSocket, payload: MessagePayload): Promise<void> {
-    try {
-      const { conversationId, content } = payload;
-
-      if (!ws.isAuthenticated || ws.role !== 'professional') {
-        ws.send(JSON.stringify({ type: 'error', message: 'Unauthorized' }));
-        return;
-      }
-
-      if (!conversationId || !content) {
-        throw new Error('Missing conversationId or content');
-      }
-
-      // Save message
-      const message = await chatService.sendMessage(conversationId, 'professional', content);
-
-      // Broadcast to all clients in this conversation
-      this.broadcastToConversation(conversationId, {
-        type: 'new_message',
-        payload: message,
-      });
-    } catch (error) {
-      logger.error('Professional message error:', error);
-      ws.send(JSON.stringify({ type: 'error', message: (error as Error).message }));
-    }
-  }
-
-  async notifyProfessionalHandover(conversationId: string, reason: string): Promise<void> {
-    try {
-      // Get conversation details
-      const result = await db.query(
-        `SELECT dt.user_id FROM conversations c
-         JOIN digital_twins dt ON c.twin_id = dt.id
-         WHERE c.id = $1`,
-        [conversationId]
-      );
-
-      if (result.rows.length === 0) return;
-
-      const userId = result.rows[0].user_id;
-      const professionalWs = this.professionalClients.get(userId);
-
-      if (professionalWs && professionalWs.readyState === WebSocket.OPEN) {
-        professionalWs.send(JSON.stringify({
-          type: 'handover_notification',
-          payload: {
-            conversationId,
-            reason,
-            message: 'A conversation needs your attention',
-          },
-        }));
-
-        logger.info(`Handover notification sent to professional ${userId}`);
-      }
-    } catch (error) {
-      logger.error('Notify professional handover error:', error);
-    }
-  }
 
   broadcastToConversation(conversationId: string, message: Record<string, unknown>, excludeWs: CustomWebSocket | null = null): void {
     const clients = this.clients.get(conversationId);

@@ -5,8 +5,8 @@ import { chatLimiter } from '../middleware/rateLimiter';
 
 const router = Router();
 
-// Public routes (for end-users chatting with twins)
-router.post('/conversations/:twinId/start', chatLimiter, chatController.startConversation.bind(chatController));
+// Public routes (for end-users chatting with knowledge bases)
+router.post('/conversations/:kbId/start', chatLimiter, chatController.startConversation.bind(chatController));
 router.post('/conversations/:conversationId/messages', chatLimiter, chatController.sendMessage.bind(chatController));
 router.get('/conversations/:conversationId/messages', chatController.getMessages.bind(chatController));
 

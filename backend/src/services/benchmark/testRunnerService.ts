@@ -50,7 +50,6 @@ interface Twin {
     system_prompt?: string;
     temperature?: number;
     max_tokens?: number;
-    handover_threshold?: number;
     semantic_search_threshold?: number;
     semantic_search_max_results?: number;
     [key: string]: unknown;
@@ -58,14 +57,13 @@ interface Twin {
 
 interface ConversationContext {
     id: string;
-    twin_id: string;
+    kb_id: string;
     user_id: string;
     status: string;
     llm_provider: LLMProvider;
     llm_model: string;
     temperature: number;
     max_tokens: number;
-    handover_threshold: number;
     semantic_search_threshold?: number;
     semantic_search_max_results?: number;
     [key: string]: unknown;
@@ -73,7 +71,7 @@ interface ConversationContext {
 
 interface Run {
     id: string;
-    twin_id: string;
+    kb_id: string;
     dataset_id: string;
     status: string;
     run_type: string;
@@ -144,7 +142,7 @@ class TestRunnerService {
         const id = uuidv4();
         const result = await pool.query(
             `INSERT INTO benchmark_runs
-       (id, twin_id, dataset_id, name, description, run_type, rag_config, status)
+       (id, kb_id, dataset_id, name, description, run_type, rag_config, status)
        VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending')
        RETURNING *`,
             [id, twinId, datasetId, name, description, runType, JSON.stringify(ragConfig)]
@@ -169,7 +167,7 @@ class TestRunnerService {
     async listRuns(twinId: string, options: ListRunsOptions = {}): Promise<Run[]> {
         const { status = null, limit = 20, offset = 0 } = options;
 
-        const conditions = ['r.twin_id = $1'];
+        const conditions = ['r.kb_id = $1'];
         const values: unknown[] = [twinId];
         let paramIndex = 2;
 
@@ -241,7 +239,7 @@ class TestRunnerService {
                 throw new Error('No questions in dataset');
             }
 
-            const twin = await this._getTwin(run.twin_id);
+            const twin = await this._getTwin(run.kb_id);
 
             let completed = 0;
             const results: Array<Record<string, unknown>> = [];
@@ -298,14 +296,13 @@ class TestRunnerService {
 
         const mockConversation: ConversationContext = {
             id: uuidv4(),
-            twin_id: run.twin_id,
+            kb_id: run.kb_id,
             user_id: twin.user_id,
             status: 'active',
             llm_provider: this._resolveLLMProvider(twin.llm_provider),
             llm_model: twin.llm_model || 'gpt-5-mini',
             temperature: typeof twin.temperature === 'number' ? twin.temperature : config.llm.defaultTemperature,
             max_tokens: typeof twin.max_tokens === 'number' ? twin.max_tokens : config.llm.defaultMaxTokens,
-            handover_threshold: typeof twin.handover_threshold === 'number' ? twin.handover_threshold : config.handover.defaultThreshold,
             semantic_search_threshold: typeof twin.semantic_search_threshold === 'number' ? twin.semantic_search_threshold : config.semanticSearch.sourceThresholds.knowledgeBase,
             semantic_search_max_results: typeof twin.semantic_search_max_results === 'number'
                 ? twin.semantic_search_max_results
@@ -614,7 +611,7 @@ class TestRunnerService {
 
     private async _getTwin(twinId: string): Promise<Twin> {
         const result = await pool.query(
-            'SELECT * FROM digital_twins WHERE id = $1',
+            'SELECT * FROM knowledge_bases WHERE id = $1',
             [twinId]
         );
         return result.rows[0];

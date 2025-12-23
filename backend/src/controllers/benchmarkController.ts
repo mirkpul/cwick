@@ -24,14 +24,14 @@ class BenchmarkController {
    */
   async createDataset(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { twinId, name, description, datasetType, tags } = req.body;
+      const { kbId, name, description, datasetType, tags } = req.body;
 
-      if (!twinId || !name) {
-        res.status(400).json({ error: 'twinId and name are required' });
+      if (!kbId || !name) {
+        res.status(400).json({ error: 'kbId and name are required' });
         return;
       }
 
-      const dataset = await datasetService.createDataset(twinId, {
+      const dataset = await datasetService.createDataset(kbId, {
         name,
         description,
         datasetType,
@@ -50,14 +50,14 @@ class BenchmarkController {
    */
   async listDatasets(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { twinId, includeInactive, limit, offset } = req.query;
+      const { kbId, includeInactive, limit, offset } = req.query;
 
-      if (!twinId) {
-        res.status(400).json({ error: 'twinId is required' });
+      if (!kbId) {
+        res.status(400).json({ error: 'kbId is required' });
         return;
       }
 
-      const datasets = await datasetService.listDatasets(twinId as string, {
+      const datasets = await datasetService.listDatasets(kbId as string, {
         includeInactive: includeInactive === 'true',
         limit: parseInt(limit as string) || 50,
         offset: parseInt(offset as string) || 0
@@ -248,14 +248,14 @@ class BenchmarkController {
    */
   async importDataset(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { twinId, data } = req.body;
+      const { kbId, data } = req.body;
 
-      if (!twinId || !data) {
-        res.status(400).json({ error: 'twinId and data are required' });
+      if (!kbId || !data) {
+        res.status(400).json({ error: 'kbId and data are required' });
         return;
       }
 
-      const dataset = await datasetService.importFromJson(twinId, data);
+      const dataset = await datasetService.importFromJson(kbId, data);
       res.status(201).json(dataset);
     } catch (error) {
       next(error);
@@ -284,14 +284,14 @@ class BenchmarkController {
    */
   async createRun(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { twinId, datasetId, name, description, runType } = req.body;
+      const { kbId, datasetId, name, description, runType } = req.body;
 
-      if (!twinId || !datasetId) {
-        res.status(400).json({ error: 'twinId and datasetId are required' });
+      if (!kbId || !datasetId) {
+        res.status(400).json({ error: 'kbId and datasetId are required' });
         return;
       }
 
-      const run = await testRunnerService.createRun(twinId, datasetId, {
+      const run = await testRunnerService.createRun(kbId, datasetId, {
         name,
         description,
         runType
@@ -309,14 +309,14 @@ class BenchmarkController {
    */
   async listRuns(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { twinId, status, limit, offset } = req.query;
+      const { kbId, status, limit, offset } = req.query;
 
-      if (!twinId) {
-        res.status(400).json({ error: 'twinId is required' });
+      if (!kbId) {
+        res.status(400).json({ error: 'kbId is required' });
         return;
       }
 
-      const runs = await testRunnerService.listRuns(twinId as string, {
+      const runs = await testRunnerService.listRuns(kbId as string, {
         status: status as string,
         limit: parseInt(limit as string) || 20,
         offset: parseInt(offset as string) || 0
@@ -480,7 +480,7 @@ class BenchmarkController {
       const { datasetId } = req.params;
       const { count = 20, types, difficulties } = req.body;
 
-      // Get dataset to find twin_id
+      // Get dataset to find kb_id
       const dataset = await datasetService.getDataset(datasetId);
       if (!dataset) {
         res.status(404).json({ error: 'Dataset not found' });
@@ -489,7 +489,7 @@ class BenchmarkController {
 
       // Generate questions
       const generated = await syntheticGeneratorService.generateFromKnowledgeBase(
-        dataset.twin_id,
+        dataset.kb_id,
         {
           count: Math.min(count, 100), // Cap at 100
           types: types || ['simple', 'complex'],
@@ -522,15 +522,15 @@ class BenchmarkController {
    */
   async generateSyntheticDataset(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { twinId, name, totalQuestions = 50, typeDistribution, difficultyDistribution } = req.body;
+      const { kbId, name, totalQuestions = 50, typeDistribution, difficultyDistribution } = req.body;
 
-      if (!twinId) {
-        res.status(400).json({ error: 'twinId is required' });
+      if (!kbId) {
+        res.status(400).json({ error: 'kbId is required' });
         return;
       }
 
       // Generate dataset with questions
-      const datasetData = await syntheticGeneratorService.generateBenchmarkDataset(twinId, {
+      const datasetData = await syntheticGeneratorService.generateBenchmarkDataset(kbId, {
         name,
         totalQuestions: Math.min(totalQuestions, 100),
         typeDistribution,
@@ -538,7 +538,7 @@ class BenchmarkController {
       });
 
       // Save to database
-      const dataset = await datasetService.importFromJson(twinId, datasetData);
+      const dataset = await datasetService.importFromJson(kbId, datasetData);
 
       res.status(201).json(dataset);
     } catch (error) {

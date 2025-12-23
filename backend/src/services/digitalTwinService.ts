@@ -29,7 +29,7 @@ export interface DigitalTwin {
 
 export interface KnowledgeBaseEntry {
     id?: string;
-    twin_id: string;
+    kb_id: string;
     title: string;
     content: string;
     content_type: string;
@@ -109,7 +109,7 @@ class DigitalTwinService {
             } = twinData;
 
             const result = await db.query(
-                `INSERT INTO digital_twins (
+                `INSERT INTO knowledge_bases (
           user_id, name, profession, bio, llm_provider, llm_model, system_prompt,
           personality_traits, communication_style, capabilities, services, pricing_info
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
@@ -186,7 +186,7 @@ class DigitalTwinService {
             values.push(twinId, userId);
 
             const result = await db.query(
-                `UPDATE digital_twins
+                `UPDATE knowledge_bases
          SET ${updateFields.join(', ')}, updated_at = NOW()
          WHERE id = $${paramCount} AND user_id = $${paramCount + 1}
          RETURNING *`,
@@ -207,7 +207,7 @@ class DigitalTwinService {
     async getDigitalTwinByUserId(userId: string): Promise<DigitalTwin | null> {
         try {
             const result = await db.query(
-                'SELECT * FROM digital_twins WHERE user_id = $1',
+                'SELECT * FROM knowledge_bases WHERE user_id = $1',
                 [userId]
             );
 
@@ -221,7 +221,7 @@ class DigitalTwinService {
     async getDigitalTwinById(twinId: string): Promise<DigitalTwin | null> {
         try {
             const result = await db.query(
-                'SELECT * FROM digital_twins WHERE id = $1 AND is_active = true',
+                'SELECT * FROM knowledge_bases WHERE id = $1 AND is_active = true',
                 [twinId]
             );
 
@@ -256,7 +256,7 @@ class DigitalTwinService {
             const embeddingVector = `[${embedding.join(',')}]`;
 
             const result = await db.query(
-                `INSERT INTO knowledge_base (twin_id, title, content, content_type, source_url, embedding)
+                `INSERT INTO knowledge_base (kb_id, title, content, content_type, source_url, embedding)
          VALUES ($1, $2, $3, $4, $5, $6::vector)
          RETURNING *`,
                 [twinId, title, content, contentType, sourceUrl, embeddingVector]
@@ -281,7 +281,7 @@ class DigitalTwinService {
     async getKnowledgeBase(twinId: string): Promise<KnowledgeBaseEntry[]> {
         try {
             const result = await db.query(
-                'SELECT * FROM knowledge_base WHERE twin_id = $1 ORDER BY created_at DESC',
+                'SELECT * FROM knowledge_base WHERE kb_id = $1 ORDER BY created_at DESC',
                 [twinId]
             );
 
@@ -295,7 +295,7 @@ class DigitalTwinService {
     async deleteKnowledgeBaseEntry(entryId: string, twinId: string): Promise<{ success: boolean }> {
         try {
             const result = await db.query(
-                'DELETE FROM knowledge_base WHERE id = $1 AND twin_id = $2 RETURNING id',
+                'DELETE FROM knowledge_base WHERE id = $1 AND kb_id = $2 RETURNING id',
                 [entryId, twinId]
             );
 
@@ -317,7 +317,7 @@ class DigitalTwinService {
     async getRAGConfig(twinId: string): Promise<RAGConfig | null> {
         try {
             const result = await db.query(
-                'SELECT rag_config FROM digital_twins WHERE id = $1',
+                'SELECT rag_config FROM knowledge_bases WHERE id = $1',
                 [twinId]
             );
 
@@ -367,7 +367,7 @@ class DigitalTwinService {
     async updateRAGConfig(twinId: string, config: RAGConfig): Promise<RAGConfig> {
         try {
             const result = await db.query(
-                `UPDATE digital_twins
+                `UPDATE knowledge_bases
          SET rag_config = $1, updated_at = NOW()
          WHERE id = $2
          RETURNING rag_config`,

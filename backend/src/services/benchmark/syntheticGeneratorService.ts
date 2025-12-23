@@ -281,7 +281,7 @@ Respond in this exact JSON format:
         const result = await pool.query(
             `SELECT id, title, content, content_type
        FROM knowledge_base
-       WHERE twin_id = $1
+       WHERE kb_id = $1
          AND content IS NOT NULL
          AND LENGTH(content) > 100
        ORDER BY created_at DESC

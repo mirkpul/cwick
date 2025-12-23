@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 interface Dataset {
   id: string;
-  twin_id: string;
+  kb_id: string;
   name: string;
   description: string;
   dataset_type: string;
@@ -73,7 +73,7 @@ class DatasetService {
     const id = uuidv4();
     const result = await pool.query<Dataset>(
       `INSERT INTO benchmark_datasets
-       (id, twin_id, name, description, dataset_type, tags)
+       (id, kb_id, name, description, dataset_type, tags)
        VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
       [id, twinId, name, description, datasetType, JSON.stringify(tags)]
@@ -102,8 +102,8 @@ class DatasetService {
    */
   async listDatasets(twinId: string, { includeInactive = false, limit = 50, offset = 0 }: ListOptions = {}): Promise<Dataset[]> {
     const whereClause = includeInactive
-      ? 'WHERE d.twin_id = $1'
-      : 'WHERE d.twin_id = $1 AND d.is_active = true';
+      ? 'WHERE d.kb_id = $1'
+      : 'WHERE d.kb_id = $1 AND d.is_active = true';
 
     const result = await pool.query<Dataset>(
       `SELECT d.*,
@@ -415,7 +415,7 @@ class DatasetService {
     if (!original) throw new Error('Dataset not found');
 
     // Create new dataset
-    const newDataset = await this.createDataset(original.twin_id, {
+    const newDataset = await this.createDataset(original.kb_id, {
       name: newName || `${original.name} (Copy)`,
       description: original.description,
       datasetType: original.dataset_type,
