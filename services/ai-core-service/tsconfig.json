@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
+    "lib": ["ES2022"],
+    "declaration": true,
+    "declarationMap": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "composite": true,
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "paths": {
+      "@virtualcoach/shared-types": ["../../packages/shared-types/dist"],
+      "@virtualcoach/shared-config": ["../../packages/shared-config/dist"],
+      "@virtualcoach/shared-utils": ["../../packages/shared-utils/dist"],
+      "@virtualcoach/sdk": ["../../packages/sdk/dist"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"],
+  "references": [
+    { "path": "../../packages/shared-types" },
+    { "path": "../../packages/shared-config" },
+    { "path": "../../packages/shared-utils" },
+    { "path": "../../packages/sdk" }
+  ]
+}

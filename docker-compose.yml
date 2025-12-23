@@ -1,0 +1,263 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: digitaltwin-db
+    environment:
+      POSTGRES_DB: digitaltwin
+      POSTGRES_USER: digitaltwin_user
+      POSTGRES_PASSWORD: digitaltwin_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/initdb:/docker-entrypoint-initdb.d
+    networks:
+      - digitaltwin-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U digitaltwin_user -d digitaltwin" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Microservices
+
+  ai-core-service:
+    build:
+      context: .
+      dockerfile: services/ai-core-service/Dockerfile
+    container_name: digitalcoach-ai-core
+    environment:
+      NODE_ENV: development
+      PORT: 3020
+      LOG_LEVEL: debug
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      DOC_PROCESSING_CHUNK_SIZE: 1500
+      DOC_PROCESSING_CHUNK_OVERLAP: 150
+      DOC_PROCESSING_REDIS_URL: redis://redis:6379
+      DOC_PROCESSING_ROLE: api-worker
+      DOC_PROCESSING_ASYNC: "true"
+      LLM_GATEWAY_URL: http://localhost:3020
+      VECTOR_SERVICE_URL: http://localhost:3020
+      VECTOR_DEFAULT_NAMESPACE: default
+      DATABASE_URL: postgresql://digitaltwin_user:digitaltwin_pass@postgres:5432/digitaltwin
+    ports:
+      - "3020:3020"
+    networks:
+      - digitaltwin-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3020/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+  web-scraping-service:
+    build:
+      context: .
+      dockerfile: services/web-scraping-service/Dockerfile
+    container_name: digitalcoach-web-scraping
+    environment:
+      NODE_ENV: development
+      PORT: 3013
+      LOG_LEVEL: debug
+      DATABASE_URL: postgresql://digitaltwin_user:digitaltwin_pass@postgres:5432/digitaltwin
+      WEB_SCRAPING_REDIS_URL: redis://redis:6379
+      WEB_SCRAPING_ROLE: api
+    ports:
+      - "3013:3013"
+    networks:
+      - digitaltwin-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3013/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+  web-scraping-worker:
+    build:
+      context: .
+      dockerfile: services/web-scraping-service/Dockerfile
+    container_name: digitalcoach-web-scraping-worker
+    environment:
+      NODE_ENV: development
+      LOG_LEVEL: debug
+      DATABASE_URL: postgresql://digitaltwin_user:digitaltwin_pass@postgres:5432/digitaltwin
+      WEB_SCRAPING_REDIS_URL: redis://redis:6379
+      WEB_SCRAPING_ROLE: worker
+    networks:
+      - digitaltwin-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"const url=new URL(process.env.WEB_SCRAPING_REDIS_URL||'redis://redis:6379');const net=require('net');const s=net.createConnection({host:url.hostname,port:Number(url.port||6379)});s.setTimeout(3000);s.on('connect',()=>{s.end();process.exit(0)});s.on('error',()=>process.exit(1));s.on('timeout',()=>process.exit(1));\""]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+  realtime-service:
+    build:
+      context: .
+      dockerfile: services/realtime-service/Dockerfile
+    container_name: digitalcoach-realtime-service
+    environment:
+      NODE_ENV: development
+      PORT: 3018
+      LOG_LEVEL: debug
+      DATABASE_URL: postgresql://digitaltwin_user:digitaltwin_pass@postgres:5432/digitaltwin
+      JWT_SECRET: ${JWT_SECRET:-your-secret-key-change-in-production}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      LLM_GATEWAY_URL: http://ai-core-service:3020
+      VECTOR_SERVICE_URL: http://ai-core-service:3020
+      RAG_RETRIEVAL_URL: http://ai-core-service:3020
+    ports:
+      - "3018:3018"
+    networks:
+      - digitaltwin-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ai-core-service:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3018/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+  email-service:
+    build:
+      context: .
+      dockerfile: services/email-service/Dockerfile
+    container_name: digitalcoach-email-service
+    environment:
+      NODE_ENV: development
+      PORT: 3017
+      LOG_LEVEL: debug
+      DATABASE_URL: postgresql://digitaltwin_user:digitaltwin_pass@postgres:5432/digitaltwin
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      GMAIL_CLIENT_ID: ${GMAIL_CLIENT_ID}
+      GMAIL_CLIENT_SECRET: ${GMAIL_CLIENT_SECRET}
+      GMAIL_REDIRECT_URI: ${GMAIL_REDIRECT_URI:-http://localhost:3001/api/email/auth/gmail/callback}
+      OUTLOOK_CLIENT_ID: ${OUTLOOK_CLIENT_ID}
+      OUTLOOK_CLIENT_SECRET: ${OUTLOOK_CLIENT_SECRET}
+      OUTLOOK_REDIRECT_URI: ${OUTLOOK_REDIRECT_URI:-http://localhost:3001/api/email/auth/outlook/callback}
+      LLM_GATEWAY_URL: http://ai-core-service:3020
+      VECTOR_SERVICE_URL: http://ai-core-service:3020
+    ports:
+      - "3017:3017"
+    networks:
+      - digitaltwin-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ai-core-service:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3017/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: digitaltwin-backend
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+      DATABASE_URL: postgresql://digitaltwin_user:digitaltwin_pass@postgres:5432/digitaltwin
+      JWT_SECRET: ${JWT_SECRET:-your-secret-key-change-in-production}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      LOG_LEVEL: debug
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      REACT_APP_URL: ${REACT_APP_URL:-http://localhost:3000}
+      GMAIL_CLIENT_ID: ${GMAIL_CLIENT_ID}
+      GMAIL_CLIENT_SECRET: ${GMAIL_CLIENT_SECRET}
+      GMAIL_REDIRECT_URI: ${GMAIL_REDIRECT_URI:-http://localhost:3001/api/email/auth/gmail/callback}
+      OUTLOOK_CLIENT_ID: ${OUTLOOK_CLIENT_ID}
+      OUTLOOK_CLIENT_SECRET: ${OUTLOOK_CLIENT_SECRET}
+      OUTLOOK_REDIRECT_URI: ${OUTLOOK_REDIRECT_URI:-http://localhost:3001/api/email/auth/outlook/callback}
+      # Microservices URLs
+      LLM_GATEWAY_URL: http://ai-core-service:3020
+      VECTOR_SERVICE_URL: http://ai-core-service:3020
+      DOC_PROCESSING_URL: http://ai-core-service:3020
+      RAG_RETRIEVAL_URL: http://ai-core-service:3020
+      WEB_SCRAPING_SERVICE_URL: http://web-scraping-service:3013
+      EMAIL_SERVICE_URL: http://email-service:3017
+      REALTIME_SERVICE_URL: http://realtime-service:3018
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./backend:/app/backend
+    working_dir: /app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ai-core-service:
+        condition: service_started
+    networks:
+      - digitaltwin-network
+    command: npm run dev --workspace=backend
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: digitaltwin-frontend
+    environment:
+      VITE_API_URL: http://localhost:3001
+      VITE_WS_URL: ws://localhost:3018
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - digitaltwin-network
+    command: npm run dev
+
+  nginx:
+    image: nginx:alpine
+    container_name: digitaltwin-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - digitaltwin-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: digitalcoach-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - digitaltwin-network
+
+volumes:
+  postgres_data:
+
+
+networks:
+  digitaltwin-network:
+    driver: bridge

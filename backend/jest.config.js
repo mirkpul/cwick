@@ -1,0 +1,31 @@
+module.exports = {
+  preset: 'ts-jest',
+  testEnvironment: 'node',
+  roots: ['<rootDir>/src'],
+  testMatch: [
+    '**/controllers/**/*.test.ts',
+    '**/controllers/**/*.test.js',
+    '**/*.integration.test.ts',
+    '**/*.integration.test.js',
+  ],
+  transform: {
+    '^.+\\.tsx?$': 'ts-jest',
+    '^.+\\.jsx?$': 'babel-jest',
+  },
+  setupFiles: ['<rootDir>/jest.setup.ts'],
+  moduleNameMapper: {
+    '^@/(.*)$': '<rootDir>/src/$1',
+  },
+  collectCoverage: false,
+  coverageDirectory: 'coverage',
+  coverageReporters: ['text', 'lcov'],
+  coveragePathIgnorePatterns: ['/node_modules/', '/dist/', '/config/', '/models/'],
+  maxWorkers: 1,
+  workerIdleMemoryLimit: '512MB',
+  testTimeout: 15000,
+  clearMocks: true,
+  resetMocks: true,
+  restoreMocks: true,
+  cache: true,
+  cacheDirectory: '<rootDir>/.jest-cache',
+};

@@ -1,0 +1,23 @@
+{
+  "name": "@virtualcoach/shared-config",
+  "version": "0.1.0",
+  "description": "Shared configuration utilities for VirtualCoach microservices",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "keywords": ["config", "shared", "microservices"],
+  "author": "VirtualCoach Team",
+  "license": "MIT",
+  "dependencies": {
+    "winston": "^3.11.0",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.6",
+    "typescript": "^5.3.3"
+  }
+}

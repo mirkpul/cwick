@@ -1,0 +1,24 @@
+{
+  "name": "@virtualcoach/sdk",
+  "version": "0.1.0",
+  "description": "SDK for service-to-service communication in VirtualCoach microservices",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "keywords": ["sdk", "client", "microservices"],
+  "author": "VirtualCoach Team",
+  "license": "MIT",
+  "dependencies": {
+    "@virtualcoach/shared-types": "^0.1.0",
+    "@virtualcoach/shared-utils": "^0.1.0",
+    "axios": "^1.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.6",
+    "typescript": "^5.3.3"
+  }
+}

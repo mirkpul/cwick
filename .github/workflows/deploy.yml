@@ -1,0 +1,118 @@
+name: Deploy to Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+      version:
+        description: 'Version to deploy (leave empty for latest)'
+        required: false
+        type: string
+
+jobs:
+  pre-deployment-checks:
+    name: Pre-Deployment Checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+
+      - name: Install backend dependencies
+        working-directory: ./backend
+        run: npm ci
+
+      - name: Install frontend dependencies
+        working-directory: ./frontend
+        run: npm ci
+      
+      - name: Ensure Rollup native binary
+        working-directory: ./frontend
+        run: |
+          ROLLUP_VERSION=$(node -p "require('rollup/package.json').version")
+          npm ls @rollup/rollup-linux-x64-gnu >/dev/null 2>&1 || npm install --no-save @rollup/rollup-linux-x64-gnu@${ROLLUP_VERSION}
+
+      - name: Run backend tests
+        working-directory: ./backend
+        run: npm test
+        env:
+          NODE_ENV: test
+          JWT_SECRET: test-secret-key
+
+      - name: Run frontend tests
+        working-directory: ./frontend
+        run: npm test
+
+      - name: Build backend
+        working-directory: ./backend
+        run: npm run build
+
+      - name: Build frontend
+        working-directory: ./frontend
+        run: npm run build
+
+  deploy:
+    name: Deploy to ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    needs: pre-deployment-checks
+    environment: ${{ inputs.environment }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deployment notification
+        run: |
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Environment: ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Version: ${{ inputs.version || 'latest' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Commit: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Triggered by: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ All pre-deployment checks passed" >> $GITHUB_STEP_SUMMARY
+
+      - name: Deploy (placeholder)
+        run: |
+          echo "Deploying to ${{ inputs.environment }}..."
+          echo "This is a placeholder step. Add your deployment steps here:"
+          echo "  - Docker image build and push"
+          echo "  - Kubernetes deployment"
+          echo "  - Cloud platform deployment (AWS, GCP, Azure, etc.)"
+          echo "  - Database migrations"
+          echo "  - Cache invalidation"
+
+  post-deployment:
+    name: Post-Deployment Verification
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: always()
+
+    steps:
+      - name: Health check
+        run: |
+          echo "Running post-deployment health checks..."
+          echo "Add your health check steps here:"
+          echo "  - API endpoint verification"
+          echo "  - Database connectivity test"
+          echo "  - Frontend accessibility check"
+
+      - name: Deployment status
+        run: |
+          if [ "${{ needs.deploy.result }}" == "success" ]; then
+            echo "✅ Deployment to ${{ inputs.environment }} completed successfully!" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Deployment to ${{ inputs.environment }} failed!" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
