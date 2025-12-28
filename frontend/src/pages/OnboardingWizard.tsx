@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { digitalTwinAPI } from '../services/api';
+import { knowledgeBaseAPI } from '../services/api';
 import toast from 'react-hot-toast';
 
 interface PersonalityTraits {
@@ -43,28 +43,28 @@ export default function OnboardingWizard(): React.JSX.Element {
   const [checking, setChecking] = useState<boolean>(true);
   const navigate = useNavigate();
 
-  // Check if user already has a digital twin
+  // Check if user already has a knowledge base
   useEffect(() => {
-    const checkExistingTwin = async (): Promise<void> => {
+    const checkExistingKB = async (): Promise<void> => {
       try {
-        const response = await digitalTwinAPI.getMyTwin();
-        if (response.data.twin) {
-          toast.success('You already have a digital twin. Redirecting to dashboard...');
+        const response = await knowledgeBaseAPI.getMyKB();
+        if (response.data.knowledgeBase) {
+          toast.success('You already have a knowledge base. Redirecting to dashboard...');
           navigate('/dashboard');
         }
       } catch (error) {
         const apiError = error as ApiError;
-        // If 404, user doesn't have a twin yet, proceed with onboarding
+        // If 404, user doesn't have a KB yet, proceed with onboarding
         if (apiError.response?.status !== 404) {
           // eslint-disable-next-line no-console
-          console.error('Error checking for existing twin:', error);
+          console.error('Error checking for existing KB:', error);
         }
       } finally {
         setChecking(false);
       }
     };
 
-    checkExistingTwin();
+    checkExistingKB();
   }, [navigate]);
 
   const [formData, setFormData] = useState<FormData>({
@@ -139,14 +139,14 @@ export default function OnboardingWizard(): React.JSX.Element {
     setLoading(true);
 
     try {
-      // Create digital twin
+      // Create knowledge base
       const systemPrompt = `You are ${formData.name}, ${formData.profession}. ${formData.bio}
 
 Communication Style: ${formData.communicationStyle}
 
-When you cannot adequately answer a question or if the user needs personalized service, offer to connect them with the professional directly.`;
+Provide helpful and accurate responses based on the knowledge base.`;
 
-      const twinData = {
+      const kbData = {
         name: formData.name,
         profession: formData.profession,
         bio: formData.bio,
@@ -158,18 +158,18 @@ When you cannot adequately answer a question or if the user needs personalized s
         capabilities: formData.capabilities,
       };
 
-      await digitalTwinAPI.create(twinData);
+      await knowledgeBaseAPI.create(kbData);
 
-      toast.success('Digital twin created successfully!');
+      toast.success('Knowledge base created successfully!');
       navigate('/dashboard');
     } catch (error) {
       const apiError = error as ApiError;
-      // If digital twin already exists, redirect to dashboard
+      // If knowledge base already exists, redirect to dashboard
       if (apiError.response?.status === 409) {
-        toast.success('You already have a digital twin. Redirecting to dashboard...');
+        toast.success('You already have a knowledge base. Redirecting to dashboard...');
         setTimeout(() => navigate('/dashboard'), 1500);
       } else {
-        toast.error(apiError.response?.data?.error || 'Failed to create digital twin');
+        toast.error(apiError.response?.data?.error || 'Failed to create knowledge base');
       }
     }
 
@@ -369,7 +369,7 @@ When you cannot adequately answer a question or if the user needs personalized s
     }
   };
 
-  // Show loading while checking for existing twin
+  // Show loading while checking for existing KB
   if (checking) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">

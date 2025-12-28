@@ -8,7 +8,7 @@ const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:3001';
 
 interface Message {
   id: string;
-  sender: 'user' | 'twin' | 'professional';
+  sender: 'user' | 'assistant';
   content: string;
   created_at: string;
 }

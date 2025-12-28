@@ -9,7 +9,7 @@ import RunComparisonTable from '../../components/benchmark/RunComparisonTable';
 import RunDetailView from '../../components/benchmark/RunDetailView';
 import { RunResult, BenchmarkRun } from '../../types/benchmark';
 
-interface DigitalTwin {
+interface KnowledgeBase {
   id: string;
   name: string;
 }
@@ -49,7 +49,7 @@ interface NewQuestion {
 
 export default function BenchmarkDashboard(): React.JSX.Element {
   const navigate = useNavigate();
-  const [twin, setTwin] = useState<DigitalTwin | null>(null);
+  const [kb, setKB] = useState<KnowledgeBase | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<TabType>('datasets');
 
@@ -77,14 +77,14 @@ export default function BenchmarkDashboard(): React.JSX.Element {
 
   const loadData = useCallback(async (): Promise<void> => {
     try {
-      const twinRes = await knowledgeBaseAPI.getMyKB();
-      const twinData = twinRes.data.twin;
-      setTwin(twinData);
+      const kbRes = await knowledgeBaseAPI.getMyKB();
+      const kbData = kbRes.data.knowledgeBase;
+      setKB(kbData);
 
-      if (twinData) {
+      if (kbData) {
         const [datasetsRes, runsRes] = await Promise.all([
-          benchmarkAPI.listDatasets(twinData.id),
-          benchmarkAPI.listRuns(twinData.id)
+          benchmarkAPI.listDatasets(kbData.id),
+          benchmarkAPI.listRuns(kbData.id)
         ]);
         setDatasets(datasetsRes.data);
         setRuns(runsRes.data);
@@ -124,7 +124,7 @@ export default function BenchmarkDashboard(): React.JSX.Element {
     }
     try {
       await benchmarkAPI.createDataset({
-        twin_id: twin!.id,
+        kb_id: kb!.id,
         ...newDataset
       });
       toast.success('Dataset created');
@@ -442,7 +442,7 @@ export default function BenchmarkDashboard(): React.JSX.Element {
 
 
         {
-          activeTab === 'settings' && twin && (
+          activeTab === 'settings' && kb && (
             <div className="max-w-4xl mx-auto">
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Benchmark RAG Configuration</h2>
@@ -450,7 +450,7 @@ export default function BenchmarkDashboard(): React.JSX.Element {
                   Configure how the RAG pipeline retrieves and processes information.
                   These settings will be snapshotted when you create a new benchmark run, allowing you to test different configurations.
                 </p>
-                <RAGConfigPanel twinId={twin.id} />
+                <RAGConfigPanel kbId={kb.id} />
               </div>
             </div>
           )

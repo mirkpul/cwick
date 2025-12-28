@@ -15,7 +15,7 @@ import { knowledgeBaseAPI } from '../services/api';
 import { RAGConfig } from '../types/rag';
 
 interface RAGConfigPanelProps {
-  twinId: string;
+  kbId: string;
   onConfigChange?: (config: RAGConfig) => void;
 }
 
@@ -42,7 +42,7 @@ interface ToggleControlProps {
   tooltip?: string;
 }
 
-const RAGConfigPanel: React.FC<RAGConfigPanelProps> = ({ twinId, onConfigChange }) => {
+const RAGConfigPanel: React.FC<RAGConfigPanelProps> = ({ kbId, onConfigChange }) => {
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [hasChanges, setHasChanges] = useState<boolean>(false);
@@ -76,7 +76,7 @@ const RAGConfigPanel: React.FC<RAGConfigPanelProps> = ({ twinId, onConfigChange 
   useEffect(() => {
     const fetchConfig = async (): Promise<void> => {
       try {
-        const response = await knowledgeBaseAPI.getRAGConfig(twinId);
+        const response = await knowledgeBaseAPI.getRAGConfig(kbId);
         if (response.data.config) {
           setConfig(prev => ({ ...prev, ...response.data.config }));
         }
@@ -85,7 +85,7 @@ const RAGConfigPanel: React.FC<RAGConfigPanelProps> = ({ twinId, onConfigChange 
       }
     };
     fetchConfig();
-  }, [twinId]);
+  }, [kbId]);
 
   const tableMaxColumns = config.ingestion?.tableMaxColumns ?? 10;
 
@@ -119,7 +119,7 @@ const RAGConfigPanel: React.FC<RAGConfigPanelProps> = ({ twinId, onConfigChange 
   const saveConfig = async (): Promise<void> => {
     setIsSaving(true);
     try {
-      await knowledgeBaseAPI.updateRAGConfig(twinId, config);
+      await knowledgeBaseAPI.updateRAGConfig(kbId, config);
       toast.success('RAG configuration saved');
       setHasChanges(false);
       if (onConfigChange) {
