@@ -1,6 +1,6 @@
 import { Response, NextFunction } from 'express';
 import chatService from '../services/chatService';
-import digitalTwinService from '../services/digitalTwinService';
+import knowledgeBaseService from '../services/knowledgeBaseService';
 import chatIntegrationService from '../services/chatIntegrationService';
 import { AuthenticatedRequest } from '../middleware/auth';
 
@@ -17,7 +17,7 @@ class ChatController {
       }
 
       // Verify knowledge base exists and is active
-      const kb = await digitalTwinService.getDigitalTwinById(kbId);
+      const kb = await knowledgeBaseService.getKnowledgeBaseById(kbId);
       if (!kb) {
         res.status(404).json({ error: 'Knowledge base not found' });
         return;
@@ -92,7 +92,7 @@ class ChatController {
       }
 
       // Get user's knowledge base
-      const kb = await digitalTwinService.getDigitalTwinByUserId(userId);
+      const kb = await knowledgeBaseService.getKnowledgeBaseByUserId(userId);
       if (!kb) {
         res.status(404).json({ error: 'Knowledge base not found' });
         return;

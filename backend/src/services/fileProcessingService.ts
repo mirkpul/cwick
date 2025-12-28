@@ -9,7 +9,7 @@ import VisualExtractionService, { VisualInsightSection } from './visualExtractio
 import structuredTableExtractionService, { StructuredTable } from './structuredTableExtractionService';
 import powerpointExtractionService, { PowerPointSlide } from './powerpointExtractionService';
 import llmService from './llmService';
-import type { KnowledgeBaseEntry } from './digitalTwinService';
+import type { KnowledgeBaseEntry } from './knowledgeBaseService';
 import vectorStoreService from './vectorStoreService';
 import db from '../config/database';
 import logger from '../config/logger';
@@ -1459,9 +1459,9 @@ class FileProcessingService {
     }
 
     /**
-     * List all uploaded files for a twin
+     * List all uploaded files for a knowledge base
      */
-    async listFilesForTwin(kbId: string): Promise<KnowledgeFile[]> {
+    async listFilesForKB(kbId: string): Promise<KnowledgeFile[]> {
         try {
             const result = await db.query<KnowledgeFile>(
                 `SELECT DISTINCT ON (file_name)

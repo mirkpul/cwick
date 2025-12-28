@@ -82,23 +82,23 @@ class KnowledgeBaseController {
   async create(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = req.user!.userId;
-      const twinData = req.body;
+      const kbData = req.body;
 
-      // Check if user already has a digital twin
-      const existingTwin = await knowledgeBaseService.getKnowledgeBaseByUserId(userId);
-      if (existingTwin) {
+      // Check if user already has a knowledge base
+      const existingKB = await knowledgeBaseService.getKnowledgeBaseByUserId(userId);
+      if (existingKB) {
         res.status(409).json({
-          error: 'Digital twin already exists for this user',
-          twin: existingTwin
+          error: 'Knowledge base already exists for this user',
+          knowledgeBase: existingKB
         });
         return;
       }
 
-      const twin = await knowledgeBaseService.createKnowledgeBase(userId, twinData);
+      const kb = await knowledgeBaseService.createKnowledgeBase(userId, kbData);
 
       res.status(201).json({
-        message: 'Digital twin created successfully',
-        twin,
+        message: 'Knowledge base created successfully',
+        knowledgeBase: kb,
       });
     } catch (error) {
       next(error);
@@ -108,14 +108,14 @@ class KnowledgeBaseController {
   async getMyKB(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = req.user!.userId;
-      const twin = await knowledgeBaseService.getKnowledgeBaseByUserId(userId);
+      const kb = await knowledgeBaseService.getKnowledgeBaseByUserId(userId);
 
-      if (!twin) {
-        res.status(404).json({ error: 'Digital twin not found' });
+      if (!kb) {
+        res.status(404).json({ error: 'Knowledge base not found' });
         return;
       }
 
-      res.json({ twin });
+      res.json({ knowledgeBase: kb });
     } catch (error) {
       next(error);
     }
@@ -127,11 +127,11 @@ class KnowledgeBaseController {
       const { kbId } = req.params;
       const updates = req.body;
 
-      const twin = await knowledgeBaseService.updateKnowledgeBase(kbId, userId, updates);
+      const kb = await knowledgeBaseService.updateKnowledgeBase(kbId, userId, updates);
 
       res.json({
-        message: 'Digital twin updated successfully',
-        twin,
+        message: 'Knowledge base updated successfully',
+        knowledgeBase: kb,
       });
     } catch (error) {
       if ((error as Error).message.includes('not found') || (error as Error).message.includes('unauthorized')) {
@@ -148,8 +148,8 @@ class KnowledgeBaseController {
       const entry = req.body;
 
       // Verify ownership
-      const twin = await knowledgeBaseService.getKnowledgeBaseByUserId(req.user!.userId);
-      if (!twin || twin.id !== kbId) {
+      const kb = await knowledgeBaseService.getKnowledgeBaseByUserId(req.user!.userId);
+      if (!kb || kb.id !== kbId) {
         res.status(403).json({ error: 'Unauthorized' });
         return;
       }
@@ -170,8 +170,8 @@ class KnowledgeBaseController {
       const { kbId } = req.params;
 
       // Verify ownership
-      const twin = await knowledgeBaseService.getKnowledgeBaseByUserId(req.user!.userId);
-      if (!twin || twin.id !== kbId) {
+      const kb = await knowledgeBaseService.getKnowledgeBaseByUserId(req.user!.userId);
+      if (!kb || kb.id !== kbId) {
         res.status(403).json({ error: 'Unauthorized' });
         return;
       }
@@ -189,8 +189,8 @@ class KnowledgeBaseController {
       const { kbId, entryId } = req.params;
 
       // Verify ownership
-      const twin = await knowledgeBaseService.getKnowledgeBaseByUserId(req.user!.userId);
-      if (!twin || twin.id !== kbId) {
+      const kb = await knowledgeBaseService.getKnowledgeBaseByUserId(req.user!.userId);
+      if (!kb || kb.id !== kbId) {
         res.status(403).json({ error: 'Unauthorized' });
         return;
       }
@@ -208,30 +208,29 @@ class KnowledgeBaseController {
       const { kbId } = req.params;
 
       // Verify ownership
-      const twin = await knowledgeBaseService.getKnowledgeBaseByUserId(req.user!.userId);
-      if (!twin || twin.id !== kbId) {
+      const kb = await knowledgeBaseService.getKnowledgeBaseByUserId(req.user!.userId);
+      if (!kb || kb.id !== kbId) {
         res.status(403).json({ error: 'Unauthorized' });
         return;
       }
 
-      // Get the full twin data and knowledge base
-      const fullTwin = await knowledgeBaseService.getKnowledgeBaseById(kbId);
+      // Get the full KB data and knowledge base
+      const fullKB = await knowledgeBaseService.getKnowledgeBaseById(kbId);
       const knowledge = await knowledgeBaseService.getKnowledgeBase(kbId);
 
-      if (!fullTwin) {
-        res.status(404).json({ error: 'Digital twin not found' });
+      if (!fullKB) {
+        res.status(404).json({ error: 'Knowledge base not found' });
         return;
       }
 
       // Generate context preview
-      const contextPreview = contextService.generateContextPreview(fullTwin, knowledge);
+      const contextPreview = contextService.generateContextPreview(fullKB, knowledge);
 
       res.json({
         contextPreview,
-        twin: {
-          id: fullTwin.id,
-          name: fullTwin.name,
-          profession: fullTwin.profession,
+        knowledgeBase: {
+          id: fullKB.id,
+          name: fullKB.name,
         },
       });
     } catch (error) {
@@ -245,14 +244,14 @@ class KnowledgeBaseController {
       const { customInstructions } = req.body;
 
       // Verify ownership
-      const twin = await knowledgeBaseService.getKnowledgeBaseByUserId(req.user!.userId);
-      if (!twin || twin.id !== kbId) {
+      const kb = await knowledgeBaseService.getKnowledgeBaseByUserId(req.user!.userId);
+      if (!kb || kb.id !== kbId) {
         res.status(403).json({ error: 'Unauthorized' });
         return;
       }
 
       // Update the system_prompt field with custom instructions
-      const updatedTwin = await knowledgeBaseService.updateKnowledgeBase(
+      const updatedKB = await knowledgeBaseService.updateKnowledgeBase(
         kbId,
         req.user!.userId,
         { system_prompt: customInstructions }
@@ -260,7 +259,7 @@ class KnowledgeBaseController {
 
       res.json({
         message: 'Custom instructions updated successfully',
-        twin: updatedTwin,
+        knowledgeBase: updatedKB,
       });
     } catch (error) {
       next(error);
@@ -273,9 +272,9 @@ class KnowledgeBaseController {
       const file = req.file;
 
       // Verify ownership
-      const twin = await knowledgeBaseService.getKnowledgeBaseByUserId(req.user!.userId);
-      if (!twin || twin.id !== kbId) {
-        res.status(403).json({ error: 'Unauthorized access to twin' });
+      const kb = await knowledgeBaseService.getKnowledgeBaseByUserId(req.user!.userId);
+      if (!kb || kb.id !== kbId) {
+        res.status(403).json({ error: 'Unauthorized access to knowledge base' });
         return;
       }
 
@@ -325,8 +324,8 @@ class KnowledgeBaseController {
       const { q: query, limit, provider } = req.query;
 
       // Verify ownership
-      const twin = await knowledgeBaseService.getKnowledgeBaseByUserId(req.user!.userId);
-      if (!twin || twin.id !== kbId) {
+      const kb = await knowledgeBaseService.getKnowledgeBaseByUserId(req.user!.userId);
+      if (!kb || kb.id !== kbId) {
         res.status(403).json({ error: 'Unauthorized' });
         return;
       }
@@ -437,8 +436,8 @@ class KnowledgeBaseController {
       const { kbId, entryId } = req.params;
 
       // Verify ownership
-      const twin = await knowledgeBaseService.getKnowledgeBaseByUserId(req.user!.userId);
-      if (!twin || twin.id !== kbId) {
+      const kb = await knowledgeBaseService.getKnowledgeBaseByUserId(req.user!.userId);
+      if (!kb || kb.id !== kbId) {
         res.status(403).json({ error: 'Unauthorized' });
         return;
       }
@@ -463,13 +462,13 @@ class KnowledgeBaseController {
       const { kbId } = req.params;
 
       // Verify ownership
-      const twin = await knowledgeBaseService.getKnowledgeBaseByUserId(req.user!.userId);
-      if (!twin || twin.id !== kbId) {
+      const kb = await knowledgeBaseService.getKnowledgeBaseByUserId(req.user!.userId);
+      if (!kb || kb.id !== kbId) {
         res.status(403).json({ error: 'Unauthorized' });
         return;
       }
 
-      const files = await fileProcessingService.listFilesForTwin(kbId);
+      const files = await fileProcessingService.listFilesForKB(kbId);
 
       res.json({ files });
     } catch (error) {
@@ -482,8 +481,8 @@ class KnowledgeBaseController {
       const { kbId } = req.params;
 
       // Verify ownership
-      const twin = await knowledgeBaseService.getKnowledgeBaseByUserId(req.user!.userId);
-      if (!twin || twin.id !== kbId) {
+      const kb = await knowledgeBaseService.getKnowledgeBaseByUserId(req.user!.userId);
+      if (!kb || kb.id !== kbId) {
         res.status(403).json({ error: 'Unauthorized' });
         return;
       }
@@ -502,8 +501,8 @@ class KnowledgeBaseController {
       const config = req.body;
 
       // Verify ownership
-      const twin = await knowledgeBaseService.getKnowledgeBaseByUserId(req.user!.userId);
-      if (!twin || twin.id !== kbId) {
+      const kb = await knowledgeBaseService.getKnowledgeBaseByUserId(req.user!.userId);
+      if (!kb || kb.id !== kbId) {
         res.status(403).json({ error: 'Unauthorized' });
         return;
       }

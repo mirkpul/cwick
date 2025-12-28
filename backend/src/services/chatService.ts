@@ -5,8 +5,8 @@ import * as ragLogger from '../config/ragLogger';
 import llmService, { LLMMessage, LLMProvider } from './llmService';
 import contextService, { SemanticResult as ContextSemanticResult } from './contextService';
 import fileProcessingService from './fileProcessingService';
-import digitalTwinService, { RAGConfig } from './digitalTwinService';
-import type { KnowledgeBaseEntry } from './digitalTwinService';
+import knowledgeBaseService, { RAGConfig } from './knowledgeBaseService';
+import type { KnowledgeBaseEntry } from './knowledgeBaseService';
 import config from '../config/appConfig';
 import queryEnhancementService, { EnhancedQueryResult as QueryEnhancementResult } from './queryEnhancementService';
 import ragRetrievalService from './ragRetrievalService';
@@ -469,7 +469,7 @@ class ChatService {
         const startTime = Date.now();
 
         try {
-            const ragConfig = (await digitalTwinService.getRAGConfig(conversation.kb_id).catch(() => null)) || {} as RAGConfig;
+            const ragConfig = (await knowledgeBaseService.getRAGConfig(conversation.kb_id).catch(() => null)) || {} as RAGConfig;
 
             const kbThreshold = ragConfig.knowledgeBaseThreshold ??
                 conversation.semantic_search_threshold ??

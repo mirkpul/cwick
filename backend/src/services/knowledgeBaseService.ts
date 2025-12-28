@@ -11,20 +11,21 @@ export interface KnowledgeBase {
     id: string;
     user_id: string;
     name: string;
-    profession: string;
-    bio: string;
+    description?: string;
+    avatar_url?: string;
     llm_provider: string;
     llm_model: string;
     system_prompt: string;
-    personality_traits: JsonValue; // JSON
-    communication_style: string;
-    capabilities: JsonValue; // JSON
-    services: JsonValue; // JSON
-    pricing_info: JsonValue; // JSON
+    temperature?: number;
+    max_tokens?: number;
+    semantic_search_threshold?: number;
+    semantic_search_max_results?: number;
     rag_config: RAGConfig;
+    is_public: boolean;
+    share_url?: string;
+    is_active: boolean;
     created_at: Date;
     updated_at: Date;
-    is_active: boolean;
 }
 
 export interface KnowledgeBaseEntry {
@@ -41,16 +42,10 @@ export interface KnowledgeBaseEntry {
 
 export interface CreateKnowledgeBaseParams {
     name: string;
-    profession: string;
-    bio?: string;
+    description?: string;
     llmProvider?: string;
     llmModel?: string;
     systemPrompt?: string;
-    personalityTraits?: Record<string, unknown>;
-    communicationStyle?: string;
-    capabilities?: Record<string, unknown>;
-    services?: Record<string, unknown>;
-    pricingInfo?: Record<string, unknown>;
 }
 
 export interface UpdateKnowledgeBaseParams extends Partial<CreateKnowledgeBaseParams> {
@@ -58,11 +53,10 @@ export interface UpdateKnowledgeBaseParams extends Partial<CreateKnowledgeBasePa
     system_prompt?: string;
     temperature?: number;
     max_tokens?: number;
-    availability_schedule?: Record<string, unknown>;
-    handover_threshold?: number;
-    auto_responses_enabled?: boolean;
     semantic_search_threshold?: number;
     semantic_search_max_results?: number;
+    is_public?: boolean;
+    share_url?: string;
 }
 
 export interface RAGConfig {
@@ -92,48 +86,35 @@ export interface RAGConfig {
 }
 
 class KnowledgeBaseService {
-    async createKnowledgeBase(userId: string, twinData: CreateKnowledgeBaseParams): Promise<KnowledgeBase> {
+    async createKnowledgeBase(userId: string, kbData: CreateKnowledgeBaseParams): Promise<KnowledgeBase> {
         try {
             const {
                 name,
-                profession,
-                bio,
+                description,
                 llmProvider = 'openai',
                 llmModel,
                 systemPrompt,
-                personalityTraits,
-                communicationStyle,
-                capabilities,
-                services,
-                pricingInfo,
-            } = twinData;
+            } = kbData;
 
             const result = await db.query(
                 `INSERT INTO knowledge_bases (
-          user_id, name, profession, bio, llm_provider, llm_model, system_prompt,
-          personality_traits, communication_style, capabilities, services, pricing_info
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+          user_id, name, description, llm_provider, llm_model, system_prompt
+        ) VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING *`,
                 [
                     userId,
                     name,
-                    profession,
-                    bio,
+                    description,
                     llmProvider,
                     llmModel,
                     systemPrompt,
-                    JSON.stringify(personalityTraits),
-                    communicationStyle,
-                    JSON.stringify(capabilities),
-                    JSON.stringify(services),
-                    JSON.stringify(pricingInfo),
                 ]
             );
 
-            logger.info(`Digital twin created for user ${userId}`);
+            logger.info(`Knowledge base created for user ${userId}: ${name}`);
             return result.rows[0] as KnowledgeBase;
         } catch (error) {
-            logger.error('Create digital twin error:', error);
+            logger.error('Create knowledge base error:', error);
             throw error;
         }
     }
@@ -142,24 +123,17 @@ class KnowledgeBaseService {
         try {
             const allowedFields = [
                 'name',
-                'profession',
-                'bio',
+                'description',
                 'avatar_url',
                 'llm_provider',
                 'llm_model',
                 'system_prompt',
                 'temperature',
                 'max_tokens',
-                'personality_traits',
-                'communication_style',
-                'capabilities',
-                'services',
-                'pricing_info',
-                'availability_schedule',
-                'handover_threshold',
-                'auto_responses_enabled',
                 'semantic_search_threshold',
                 'semantic_search_max_results',
+                'is_public',
+                'share_url',
             ];
 
             const updateFields: string[] = [];
@@ -169,12 +143,7 @@ class KnowledgeBaseService {
             (Object.keys(updates) as Array<keyof UpdateKnowledgeBaseParams>).forEach(key => {
                 if (allowedFields.includes(key)) {
                     updateFields.push(`${key} = $${paramCount}`);
-                    // Stringify JSON fields
-                    if (['personality_traits', 'capabilities', 'services', 'pricing_info', 'availability_schedule'].includes(key)) {
-                        values.push(JSON.stringify(updates[key]));
-                    } else {
-                        values.push(updates[key]);
-                    }
+                    values.push(updates[key]);
                     paramCount++;
                 }
             });
@@ -194,12 +163,13 @@ class KnowledgeBaseService {
             );
 
             if (result.rows.length === 0) {
-                throw new Error('Digital twin not found or unauthorized');
+                throw new Error('Knowledge base not found or unauthorized');
             }
 
+            logger.info(`Knowledge base updated: ${kbId}`);
             return result.rows[0] as KnowledgeBase;
         } catch (error) {
-            logger.error('Update digital twin error:', error);
+            logger.error('Update knowledge base error:', error);
             throw error;
         }
     }
@@ -213,7 +183,7 @@ class KnowledgeBaseService {
 
             return result.rows[0] as KnowledgeBase || null;
         } catch (error) {
-            logger.error('Get digital twin error:', error);
+            logger.error('Get knowledge base error:', error);
             throw error;
         }
     }
@@ -227,7 +197,7 @@ class KnowledgeBaseService {
 
             return result.rows[0] as KnowledgeBase || null;
         } catch (error) {
-            logger.error('Get digital twin error:', error);
+            logger.error('Get knowledge base error:', error);
             throw error;
         }
     }
@@ -246,7 +216,7 @@ class KnowledgeBaseService {
             }
 
             // Generate embedding for the content
-            logger.info(`Generating embedding for manual knowledge entry: "${title}"`);
+            logger.info(`Generating embedding for knowledge entry: "${title}"`);
 
             const embedding = await LLMService.generateEmbedding(content, resolvedProvider);
 
@@ -262,7 +232,7 @@ class KnowledgeBaseService {
                 [kbId, title, content, contentType, sourceUrl, embeddingVector]
             );
 
-            logger.info(`Manual knowledge entry added with embedding: ${result.rows[0].id}`);
+            logger.info(`Knowledge entry added with embedding: ${result.rows[0].id}`);
 
             // Push to vector service if enabled
             await vectorStoreService.upsertEmbedding({
@@ -287,7 +257,7 @@ class KnowledgeBaseService {
 
             return result.rows as KnowledgeBaseEntry[];
         } catch (error) {
-            logger.error('Get knowledge base error:', error);
+            logger.error('Get knowledge base entries error:', error);
             throw error;
         }
     }
@@ -303,6 +273,7 @@ class KnowledgeBaseService {
                 throw new Error('Knowledge base entry not found');
             }
 
+            logger.info(`Knowledge base entry deleted: ${entryId}`);
             return { success: true };
         } catch (error) {
             logger.error('Delete knowledge base entry error:', error);
@@ -311,7 +282,7 @@ class KnowledgeBaseService {
     }
 
     /**
-     * Get RAG configuration for a digital twin
+     * Get RAG configuration for a knowledge base
      * Returns stored config merged with defaults from appConfig
      */
     async getRAGConfig(kbId: string): Promise<RAGConfig | null> {
@@ -362,7 +333,7 @@ class KnowledgeBaseService {
     }
 
     /**
-     * Update RAG configuration for a digital twin
+     * Update RAG configuration for a knowledge base
      */
     async updateRAGConfig(kbId: string, config: RAGConfig): Promise<RAGConfig> {
         try {
@@ -375,10 +346,10 @@ class KnowledgeBaseService {
             );
 
             if (result.rows.length === 0) {
-                throw new Error('Digital twin not found');
+                throw new Error('Knowledge base not found');
             }
 
-            logger.info(`RAG config updated for twin ${kbId}`);
+            logger.info(`RAG config updated for KB ${kbId}`);
             return result.rows[0].rag_config;
         } catch (error) {
             logger.error('Update RAG config error:', error);

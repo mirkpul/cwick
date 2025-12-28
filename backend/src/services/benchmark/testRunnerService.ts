@@ -99,7 +99,7 @@ interface InstrumentedSearchResult {
 
 class TestRunnerService {
     private chatService: typeof import('../chatService').default | null = null;
-    private digitalTwinService: typeof import('../digitalTwinService').default | null = null;
+    private knowledgeBaseService: typeof import('../knowledgeBaseService').default | null = null;
     private fileProcessingService: typeof import('../fileProcessingService').default | null = null;
     private llmJudgeService: typeof import('./llmJudgeService').default | null = null;
     private llmService: typeof import('../llmService').default | null = null;
@@ -108,14 +108,14 @@ class TestRunnerService {
      * Lazy load dependencies to avoid circular imports
      */
     private async _loadDependencies(): Promise<void> {
-        if (!this.chatService || !this.digitalTwinService || !this.fileProcessingService) {
-            const [chatModule, digitalTwinModule, fileProcessingModule] = await Promise.all([
+        if (!this.chatService || !this.knowledgeBaseService || !this.fileProcessingService) {
+            const [chatModule, knowledgeBaseModule, fileProcessingModule] = await Promise.all([
                 import('../chatService'),
-                import('../digitalTwinService'),
+                import('../knowledgeBaseService'),
                 import('../fileProcessingService'),
             ]);
             this.chatService = chatModule.default;
-            this.digitalTwinService = digitalTwinModule.default;
+            this.knowledgeBaseService = knowledgeBaseModule.default;
             this.fileProcessingService = fileProcessingModule.default;
         }
 
@@ -137,7 +137,7 @@ class TestRunnerService {
 
         const { name, description, runType = 'full' } = options;
 
-        const ragConfig = await this.digitalTwinService!.getRAGConfig(twinId);
+        const ragConfig = await this.knowledgeBaseService!.getRAGConfig(twinId);
 
         const id = uuidv4();
         const result = await pool.query(
