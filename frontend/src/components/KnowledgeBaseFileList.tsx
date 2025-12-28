@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { DocumentIcon, TrashIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
-import { digitalTwinAPI } from '../services/api';
+import { knowledgeBaseAPI } from '../services/api';
 import { UploadedFile } from '../types';
 
 interface KnowledgeBaseFileListProps {
@@ -59,7 +59,7 @@ const KnowledgeBaseFileList: React.FC<KnowledgeBaseFileListProps> = ({ twinId, f
 
     setDeletingFileId(fileId);
     try {
-      await digitalTwinAPI.deleteKnowledgeFile(twinId, fileId);
+      await knowledgeBaseAPI.deleteKnowledgeFile(twinId, fileId);
       toast.success('File deleted successfully');
       onFileDeleted(fileId);
     } catch (error: unknown) {

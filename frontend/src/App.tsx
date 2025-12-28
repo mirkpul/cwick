@@ -9,7 +9,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import OAuthCallback from './pages/OAuthCallback';
 import OnboardingWizard from './pages/OnboardingWizard';
-import ProfessionalDashboard from './pages/ProfessionalDashboard';
+import KBManagementDashboard from './pages/KBManagementDashboard';
 import SuperAdminDashboard from './pages/SuperAdminDashboard';
 import Chat from './pages/Chat';
 import EmailOAuthCallback from './pages/EmailOAuthCallback';
@@ -56,7 +56,7 @@ function AppRoutes() {
       <Route
         path="/onboarding"
         element={
-          <ProtectedRoute allowedRoles={['professional']}>
+          <ProtectedRoute allowedRoles={['kb_owner']}>
             <OnboardingWizard />
           </ProtectedRoute>
         }
@@ -65,8 +65,8 @@ function AppRoutes() {
       <Route
         path="/dashboard"
         element={
-          <ProtectedRoute allowedRoles={['professional']}>
-            <ProfessionalDashboard />
+          <ProtectedRoute allowedRoles={['kb_owner']}>
+            <KBManagementDashboard />
           </ProtectedRoute>
         }
       />
@@ -83,13 +83,13 @@ function AppRoutes() {
       <Route
         path="/benchmark"
         element={
-          <ProtectedRoute allowedRoles={['professional', 'super_admin']}>
+          <ProtectedRoute allowedRoles={['kb_owner', 'super_admin']}>
             <BenchmarkDashboard />
           </ProtectedRoute>
         }
       />
 
-      <Route path="/chat/:twinId" element={<Chat />} />
+      <Route path="/chat/:kbId" element={<Chat />} />
 
       <Route path="/auth/email/callback" element={<EmailOAuthCallback />} />
 

@@ -62,7 +62,7 @@ router.get(
     '/auth/github/callback',
     passport.authenticate('github', {
         session: false,
-        failureRedirect: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=oauth_failed',
+        failureRedirect: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=oauth_failed`,
     }),
     (req: Request, res: Response) => {
         try {

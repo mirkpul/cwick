@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { MagnifyingGlassIcon, SparklesIcon, EnvelopeIcon, BookOpenIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
-import { digitalTwinAPI } from '../services/api';
+import { knowledgeBaseAPI } from '../services/api';
 import { format } from 'date-fns';
 import RAGConfigPanel from './RAGConfigPanel';
 import { RAGConfig, SearchResult as BaseSearchResult } from '../types/rag';
@@ -45,7 +45,7 @@ const SemanticSearch: React.FC<SemanticSearchProps> = ({ twinId }) => {
     setHasSearched(true);
 
     try {
-      const response = await digitalTwinAPI.searchKnowledge(twinId, query.trim(), 10);
+      const response = await knowledgeBaseAPI.searchKnowledge(twinId, query.trim(), 10);
       setKnowledgeResults(response.data.knowledge || []);
       setEmailResults(response.data.emails || []);
 

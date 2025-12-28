@@ -11,7 +11,7 @@ import {
   Squares2X2Icon,
 } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
-import { digitalTwinAPI } from '../services/api';
+import { knowledgeBaseAPI } from '../services/api';
 import { RAGConfig } from '../types/rag';
 
 interface RAGConfigPanelProps {
@@ -76,7 +76,7 @@ const RAGConfigPanel: React.FC<RAGConfigPanelProps> = ({ twinId, onConfigChange 
   useEffect(() => {
     const fetchConfig = async (): Promise<void> => {
       try {
-        const response = await digitalTwinAPI.getRAGConfig(twinId);
+        const response = await knowledgeBaseAPI.getRAGConfig(twinId);
         if (response.data.config) {
           setConfig(prev => ({ ...prev, ...response.data.config }));
         }
@@ -119,7 +119,7 @@ const RAGConfigPanel: React.FC<RAGConfigPanelProps> = ({ twinId, onConfigChange 
   const saveConfig = async (): Promise<void> => {
     setIsSaving(true);
     try {
-      await digitalTwinAPI.updateRAGConfig(twinId, config);
+      await knowledgeBaseAPI.updateRAGConfig(twinId, config);
       toast.success('RAG configuration saved');
       setHasChanges(false);
       if (onConfigChange) {

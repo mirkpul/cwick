@@ -271,7 +271,4 @@ export const webScrapingAPI = {
     }),
 };
 
-// Backwards compatibility alias (DEPRECATED - use knowledgeBaseAPI instead)
-export const digitalTwinAPI = knowledgeBaseAPI;
-
 export default api;

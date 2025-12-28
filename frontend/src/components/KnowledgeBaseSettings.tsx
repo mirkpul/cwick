@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { digitalTwinAPI } from '../services/api';
+import { knowledgeBaseAPI } from '../services/api';
 import toast from 'react-hot-toast';
 
 interface Capabilities {
@@ -49,7 +49,7 @@ interface DigitalTwin {
   purpose_config?: PurposeConfig | null;
 }
 
-interface TwinSettingsProps {
+interface KnowledgeBaseSettingsProps {
   twin: DigitalTwin;
   onUpdate?: () => void;
 }
@@ -80,7 +80,7 @@ interface FormData {
   clarifyingPrompt: string;
 }
 
-export default function TwinSettings({ twin, onUpdate }: TwinSettingsProps): React.JSX.Element {
+export default function KnowledgeBaseSettings({ twin, onUpdate }: KnowledgeBaseSettingsProps): React.JSX.Element {
   const [formData, setFormData] = useState<FormData>({
     name: '',
     profession: '',
@@ -189,7 +189,7 @@ export default function TwinSettings({ twin, onUpdate }: TwinSettingsProps): Rea
         },
       };
 
-      await digitalTwinAPI.update(twin.id, updateData);
+      await knowledgeBaseAPI.update(twin.id, updateData);
       toast.success('Settings updated successfully');
       if (onUpdate) onUpdate();
     } catch {

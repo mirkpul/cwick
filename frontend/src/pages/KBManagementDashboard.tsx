@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { digitalTwinAPI, chatAPI, emailAPI } from '../services/api';
+import { knowledgeBaseAPI, chatAPI, emailAPI } from '../services/api';
 import toast from 'react-hot-toast';
 import { UploadedFile as UploadedFileType } from '../types';
-import TwinSettings from '../components/TwinSettings';
+import KnowledgeBaseSettings from '../components/KnowledgeBaseSettings';
 import FileUploadDropZone from '../components/FileUploadDropZone';
 import KnowledgeBaseFileList from '../components/KnowledgeBaseFileList';
 import SemanticSearch from '../components/SemanticSearch';
@@ -83,7 +83,7 @@ const TAB_LABELS: Record<TabType, string> = {
   settings: 'Settings',
 };
 
-export default function ProfessionalDashboard(): React.JSX.Element {
+export default function KBManagementDashboard(): React.JSX.Element {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
@@ -116,7 +116,7 @@ export default function ProfessionalDashboard(): React.JSX.Element {
   const loadDashboardData = async (): Promise<void> => {
     try {
       const [twinRes, convsRes, handoversRes] = await Promise.all([
-        digitalTwinAPI.getMyTwin(),
+        knowledgeBaseAPI.getMyKB(),
         chatAPI.getMyConversations(),
         chatAPI.getHandovers(false),
       ]);
@@ -128,8 +128,8 @@ export default function ProfessionalDashboard(): React.JSX.Element {
 
       if (twinData) {
         const [kbRes, filesRes, emailStatusRes] = await Promise.all([
-          digitalTwinAPI.getKnowledge(twinData.id),
-          digitalTwinAPI.listKnowledgeFiles(twinData.id),
+          knowledgeBaseAPI.getKnowledge(twinData.id),
+          knowledgeBaseAPI.listKnowledgeFiles(twinData.id),
           emailAPI.getSyncStatus().catch(() => ({ data: { connected: false } }))
         ]);
         setKnowledgeBase(kbRes.data.knowledge);
@@ -157,7 +157,7 @@ export default function ProfessionalDashboard(): React.JSX.Element {
     }
 
     try {
-      await digitalTwinAPI.addKnowledge(twin!.id, {
+      await knowledgeBaseAPI.addKnowledge(twin!.id, {
         question: newKnowledge.title,
         answer: newKnowledge.content,
         category: 'manual_entry',
@@ -175,7 +175,7 @@ export default function ProfessionalDashboard(): React.JSX.Element {
     if (!confirm('Are you sure you want to delete this entry?')) return;
 
     try {
-      await digitalTwinAPI.deleteKnowledge(twin!.id, entryId);
+      await knowledgeBaseAPI.deleteKnowledge(twin!.id, entryId);
       toast.success('Knowledge entry deleted');
       loadDashboardData();
     } catch {
@@ -184,7 +184,7 @@ export default function ProfessionalDashboard(): React.JSX.Element {
   };
 
   const handleFileUploadSuccess = async (formData: FormData, onProgress: (progressEvent: { loaded: number; total: number }) => void): Promise<void> => {
-    await digitalTwinAPI.uploadKnowledgeFile(twin!.id, formData, (progressEvent) => {
+    await knowledgeBaseAPI.uploadKnowledgeFile(twin!.id, formData, (progressEvent) => {
       const total = progressEvent.total || 100;
       const percentCompleted = Math.round((progressEvent.loaded * 100) / total);
       onProgress({ loaded: percentCompleted, total: 100 });
@@ -192,7 +192,7 @@ export default function ProfessionalDashboard(): React.JSX.Element {
     toast.success('File uploaded and processed successfully!');
 
     // Reload files list
-    const filesRes = await digitalTwinAPI.listKnowledgeFiles(twin!.id);
+    const filesRes = await knowledgeBaseAPI.listKnowledgeFiles(twin!.id);
     setUploadedFiles((filesRes.data.files || []) as UploadedFileType[]);
   };
 
@@ -518,7 +518,7 @@ export default function ProfessionalDashboard(): React.JSX.Element {
         {activeTab === 'settings' && twin && (
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-xl font-bold mb-6">Digital Twin Settings</h2>
-            <TwinSettings twin={twin} onUpdate={loadDashboardData} />
+            <KnowledgeBaseSettings twin={twin} onUpdate={loadDashboardData} />
           </div>
         )}
       </div>

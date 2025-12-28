@@ -18,7 +18,7 @@ interface StreamingMessage extends Message {
 }
 
 export default function Chat() {
-  const { twinId } = useParams<{ twinId: string }>();
+  const { kbId } = useParams<{ kbId: string }>();
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [streamingMessages, setStreamingMessages] = useState<Record<string, StreamingMessage>>({});
@@ -48,7 +48,7 @@ export default function Chat() {
     setLoading(true);
 
     try {
-      const response = await chatAPI.startConversation(twinId!, {
+      const response = await chatAPI.startConversation(kbId!, {
         end_user_name: userName,
         end_user_email: userEmail || undefined,
       });

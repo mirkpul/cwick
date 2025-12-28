@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { benchmarkAPI, digitalTwinAPI } from '../../services/api';
+import { benchmarkAPI, knowledgeBaseAPI } from '../../services/api';
 import DatasetList, { Dataset } from '../../components/benchmark/DatasetList';
 import QuestionsList, { Question } from '../../components/benchmark/QuestionsList';
 import RAGConfigPanel from '../../components/RAGConfigPanel';
@@ -77,7 +77,7 @@ export default function BenchmarkDashboard(): React.JSX.Element {
 
   const loadData = useCallback(async (): Promise<void> => {
     try {
-      const twinRes = await digitalTwinAPI.getMyTwin();
+      const twinRes = await knowledgeBaseAPI.getMyKB();
       const twinData = twinRes.data.twin;
       setTwin(twinData);
 
