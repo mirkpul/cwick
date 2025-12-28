@@ -27,7 +27,6 @@ interface TwinProfile {
   services?: Record<string, unknown> | null;
   pricing_info?: Record<string, unknown> | null;
   system_prompt?: string;
-  handover_threshold?: number;
 }
 
 interface KnowledgeEntry {
@@ -221,7 +220,6 @@ class ContextService {
     businessInfo: string;
     knowledgeBase: string;
     guidelines: string;
-    handoverProtocol: string;
     customInstructions: string | null;
     fullPrompt: string;
     systemPrompt?: string;
@@ -254,14 +252,11 @@ class ContextService {
     // Build guidelines section
     const guidelines = 'Conversation Guidelines: Be helpful, accurate, and respectful.';
 
-    // Build handover protocol section
-    const handoverProtocol = `Handover Protocol: Threshold ${twin.handover_threshold || 0.7}`;
-
     // Custom instructions
     const customInstructions = twin.system_prompt || null;
 
     // Build full prompt
-    const fullPromptParts = [identity, personality, expertise, guidelines, handoverProtocol];
+    const fullPromptParts = [identity, personality, expertise, guidelines];
     if (customInstructions) {
       fullPromptParts.push(`Additional Instructions: ${customInstructions}`);
     }
@@ -275,7 +270,6 @@ class ContextService {
       businessInfo,
       knowledgeBase,
       guidelines,
-      handoverProtocol,
       customInstructions,
       fullPrompt,
       systemPrompt: customInstructions || '',
@@ -361,10 +355,6 @@ class ContextService {
     // Conversation Guidelines
     sections.push('\n# Conversation Guidelines');
     sections.push('Be helpful, accurate, and respectful.');
-
-    // Handover Protocol
-    sections.push('\n# Handover Protocol');
-    sections.push(`Threshold: ${twin.handover_threshold || 0.7}`);
 
     // Custom instructions
     if (twin.system_prompt) {

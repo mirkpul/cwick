@@ -57,10 +57,6 @@ export interface LLMConfig {
   };
 }
 
-export interface HandoverConfig {
-  defaultThreshold: number;
-}
-
 export interface EnsembleBalancingConfig {
   enabled: boolean;
   minEmailResults: number;
@@ -197,7 +193,6 @@ export interface AppConfig {
   chunking: ChunkingConfig;
   semanticChunking: SemanticChunkingConfig;
   llm: LLMConfig;
-  handover: HandoverConfig;
   semanticSearch: SemanticSearchConfig;
   conversations: ConversationsConfig;
   search: SearchConfig;
@@ -279,11 +274,6 @@ const config: AppConfig = {
         // Future: Anthropic embedding support will be added here
       },
     },
-  },
-
-  // Handover Configuration
-  handover: {
-    defaultThreshold: 0.5,        // Confidence threshold below which to request human assistance
   },
 
   // Semantic Search Configuration
@@ -563,13 +553,6 @@ function validateConfig(): void {
   if (!Number.isInteger(llm.providers.openai.embeddingDimensions) ||
       llm.providers.openai.embeddingDimensions <= 0) {
     errors.push('llm.providers.openai.embeddingDimensions must be a positive integer');
-  }
-
-  // Validate handover configuration
-  const handover = config.handover;
-
-  if (handover.defaultThreshold < 0 || handover.defaultThreshold > 1) {
-    errors.push('handover.defaultThreshold must be between 0 and 1');
   }
 
   // Validate file upload configuration
