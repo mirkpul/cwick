@@ -3,8 +3,8 @@ module.exports = {
   testEnvironment: 'node',
   roots: ['<rootDir>/src'],
   testMatch: [
-    '**/controllers/**/*.test.ts',
-    '**/controllers/**/*.test.js',
+    '**/*.test.ts',
+    '**/*.test.js',
     '**/*.integration.test.ts',
     '**/*.integration.test.js',
   ],
