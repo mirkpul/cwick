@@ -1,25 +1,24 @@
-import axios from 'axios';
-import type { RAGSearchResponse, SearchResult } from '@virtualcoach/shared-types';
-import llmService from './llmService';
+// DEPRECATED: This service was for calling external RAG retrieval microservice
+// Now integrated directly in chatService.ts hybrid search
+// Kept as stub for backwards compatibility
 
-const baseURL = process.env.RAG_RETRIEVAL_URL || 'http://localhost:3016';
+export interface SearchResult {
+  id: string;
+  content: string;
+  score: number;
+  source_type?: string;
+  file_name?: string;
+  title?: string;
+  metadata?: Record<string, unknown>;
+}
 
 class RAGRetrievalService {
   isEnabled(): boolean {
-    return !!process.env.RAG_RETRIEVAL_URL;
+    return false; // Microservice no longer used
   }
 
-  async search(query: string, twinId: string, userId: string, limit: number): Promise<SearchResult[]> {
-    const embedding = await llmService.generateEmbedding(query, 'openai');
-    const response = await axios.post<RAGSearchResponse>(`${baseURL}/search`, {
-      query,
-      twinId,
-      maxResults: limit,
-      queryVector: embedding,
-    });
-
-    const payload = response.data as unknown as { data?: RAGSearchResponse; results?: SearchResult[] };
-    return payload.data?.results || payload.results || [];
+  async search(_query: string, _twinId: string, _userId: string, _limit: number): Promise<SearchResult[]> {
+    throw new Error('RAG retrieval service disabled - use chatService hybridSearch directly');
   }
 }
 

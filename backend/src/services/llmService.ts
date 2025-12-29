@@ -1,8 +1,6 @@
 import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { LLMClient } from '@virtualcoach/sdk';
-import type { GenerateResponseRequest, GenerateEmbeddingRequest } from '@virtualcoach/shared-types';
 import logger from '../config/logger';
 import config from '../config/appConfig';
 
@@ -63,7 +61,6 @@ class LLMService {
     private anthropic: Anthropic;
     private gemini: GoogleGenerativeAI;
     private charactersPerToken: number;
-    private gatewayClient: LLMClient;
 
     constructor() {
         this.openai = new OpenAI({
@@ -74,21 +71,6 @@ class LLMService {
         });
         this.gemini = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
         this.charactersPerToken = config.chunking.charactersPerToken || 4;
-        this.gatewayClient = new LLMClient({
-            baseURL: process.env.LLM_GATEWAY_URL || 'http://localhost:3012',
-            defaultProvider: 'openai',
-        });
-    }
-
-    private toGatewayMessages(messages: LLMMessage[], systemPrompt?: string) {
-        const systemMessage = systemPrompt
-            ? [{ role: 'system', content: systemPrompt }]
-            : [];
-        const formatted = messages.map(msg => ({
-            role: msg.role || (msg.sender === 'user' ? 'user' : 'assistant'),
-            content: msg.content,
-        }));
-        return [...systemMessage, ...formatted];
     }
 
     private getAnthropicMessagesClient(): AnthropicMessagesClient {
@@ -107,30 +89,20 @@ class LLMService {
         temperature: number | string = config.llm.defaultTemperature,
         maxTokens: number | string = config.llm.defaultMaxTokens
     ): Promise<LLMResponse> {
-        try {
-            const temp = parseFloat(temperature.toString());
-            const maxTok = parseInt(maxTokens.toString(), 10);
-            const formattedMessages = this.toGatewayMessages(messages, systemPrompt);
+        const temp = parseFloat(temperature.toString());
+        const maxTok = parseInt(maxTokens.toString(), 10);
 
-            const response = await this.gatewayClient.generateResponse({
-                provider,
-                model,
-                messages: formattedMessages,
-                temperature: temp,
-                maxTokens: maxTok,
-            } as GenerateResponseRequest);
-
-            return {
-                content: response.content,
-                metadata: {
-                    model: response.model,
-                    usage: response.usage,
-                    finish_reason: response.finish_reason,
-                },
-            };
-        } catch (error) {
-            logger.error('LLM generation error:', error);
-            throw error;
+        // Call provider directly instead of through gateway
+        switch (provider) {
+            case 'openai':
+                return this.generateOpenAIResponse(model, messages, systemPrompt, temp, maxTok);
+            case 'anthropic':
+                return this.generateAnthropicResponse(model, messages, systemPrompt, temp, maxTok);
+            case 'gemini':
+                return this.generateGeminiResponse(model, messages, systemPrompt, temp, maxTok);
+            default:
+                // Fallback to openai
+                return this.generateOpenAIResponse(model, messages, systemPrompt, temp, maxTok);
         }
     }
 
@@ -543,12 +515,14 @@ class LLMService {
         if (provider === 'anthropic') {
             throw new Error('Embeddings not supported for provider: anthropic');
         }
-        const response = await this.gatewayClient.generateEmbedding({
-            text,
-            provider: provider as 'openai' | 'anthropic',
-            model: provider === 'openai' ? config.llm.providers.openai.embeddingModel : undefined,
-        } as GenerateEmbeddingRequest);
-        return response.embeddings[0];
+
+        // Call OpenAI directly
+        const response = await this.openai.embeddings.create({
+            model: config.llm.providers.openai.embeddingModel,
+            input: text,
+        });
+
+        return response.data[0].embedding;
     }
 
     private estimateTokens(text: string): number {
@@ -602,8 +576,12 @@ class LLMService {
     }
 
     private async requestOpenAiEmbeddings(inputs: string[], _retries: number): Promise<number[][]> {
-        const response = await this.gatewayClient.generateBatchEmbeddings(inputs, 'openai');
-        return response;
+        const response = await this.openai.embeddings.create({
+            model: config.llm.providers.openai.embeddingModel,
+            input: inputs,
+        });
+
+        return response.data.map(item => item.embedding);
     }
 
     async generateBatchEmbeddings(texts: string[], provider: string = 'openai', retries: number = 3): Promise<number[][]> {

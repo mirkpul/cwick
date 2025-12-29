@@ -1,79 +1,61 @@
-import { EmailClient } from '@virtualcoach/sdk';
+// DEPRECATED: This service was for calling external email-service microservice
+// Now integrated directly in emailSyncService.ts, gmailConnector.ts, etc.
+// Kept as stub for backwards compatibility
 
 class EmailIntegrationService {
-  private client: EmailClient | null;
-
-  constructor() {
-    const baseURL = process.env.EMAIL_SERVICE_URL;
-    if (baseURL) {
-      this.client = new EmailClient({
-        baseURL,
-      });
-    } else {
-      this.client = null;
-    }
-  }
-
   isEnabled(): boolean {
-    return !!this.client;
+    return false; // Microservice no longer used
   }
 
-  private getClient(): EmailClient {
-    if (!this.client) {
-      throw new Error('Email service not configured');
-    }
-    return this.client;
+  async getGmailAuthUrl(_userId: string): Promise<{ authUrl: string }> {
+    throw new Error('Email service integration disabled - use emailAuthService directly');
   }
 
-  async getGmailAuthUrl(userId: string) {
-    return this.getClient().getGmailAuthUrl(userId);
+  async handleGmailCallback(_code: string, _state: string): Promise<{ success: boolean }> {
+    throw new Error('Email service integration disabled - use emailAuthService directly');
   }
 
-  async handleGmailCallback(code: string, state: string) {
-    return this.getClient().handleGmailCallback({ code, state });
+  async getOutlookAuthUrl(_userId: string): Promise<{ authUrl: string }> {
+    throw new Error('Email service integration disabled - use emailAuthService directly');
   }
 
-  async getOutlookAuthUrl(userId: string) {
-    return this.getClient().getOutlookAuthUrl(userId);
-  }
-
-  async handleOutlookCallback(code: string, state: string) {
-    return this.getClient().handleOutlookCallback({ code, state });
+  async handleOutlookCallback(_code: string, _state: string): Promise<{ success: boolean }> {
+    throw new Error('Email service integration disabled - use emailAuthService directly');
   }
 
   async storeImapCredentials(
-    userId: string,
-    payload: { emailAddress: string; host: string; port: number | string; password: string }
-  ) {
-    return this.getClient().storeImapCredentials(userId, payload);
+    _userId: string,
+    _payload: { emailAddress: string; host: string; port: number | string; password: string }
+  ): Promise<{ credentialId: string }> {
+    throw new Error('Email service integration disabled - use emailAuthService directly');
   }
 
-  async triggerSync(userId: string, payload: { credentialId?: string; type?: string }) {
-    return this.getClient().triggerSync(userId, payload);
+  async triggerSync(_userId: string, _payload: { credentialId?: string; type?: string }): Promise<{ syncType: string }> {
+    throw new Error('Email service integration disabled - use emailSyncService directly');
   }
 
-  async getSyncStatus(userId: string) {
-    return this.getClient().getSyncStatus(userId);
+  async getSyncStatus(_userId: string): Promise<{ status: string }> {
+    throw new Error('Email service integration disabled - use emailSyncService directly');
   }
 
-  async toggleAutoSync(userId: string, enabled: boolean) {
-    return this.getClient().toggleAutoSync(userId, enabled);
+  async toggleAutoSync(_userId: string, _enabled: boolean): Promise<{ autoSyncEnabled: boolean }> {
+    throw new Error('Email service integration disabled - use emailSyncService directly');
   }
 
-  async listEmails(userId: string, params: { limit?: number; offset?: number; search?: string } = {}) {
-    return this.getClient().listEmails(userId, params);
+  async listEmails(_userId: string, _params: { limit?: number; offset?: number; search?: string } = {}): Promise<unknown[]> {
+    throw new Error('Email service integration disabled - use emailSyncService directly');
   }
 
-  async deleteEmail(userId: string, emailId: string) {
-    return this.getClient().deleteEmail(userId, emailId);
+  async deleteEmail(_userId: string, _emailId: string): Promise<void> {
+    throw new Error('Email service integration disabled - use emailSyncService directly');
   }
 
-  async disconnectEmail(userId: string) {
-    return this.getClient().disconnectEmail(userId);
+  async disconnectEmail(_userId: string): Promise<void> {
+    throw new Error('Email service integration disabled - use emailAuthService directly');
   }
 
-  async semanticSearch(userId: string, payload: { query: string; limit?: number; threshold?: number }) {
-    return this.getClient().semanticSearch(userId, payload);
+  async semanticSearch(_userId: string, _payload: { query: string; limit?: number; threshold?: number }): Promise<unknown[]> {
+    throw new Error('Email service integration disabled - use chatService RAG search directly');
   }
 }
 

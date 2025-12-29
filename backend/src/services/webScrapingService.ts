@@ -1,67 +1,65 @@
-import axios from 'axios';
-import { WebScrapingClient } from '@virtualcoach/sdk';
-import type { WebSource, WebScrapeRun, CreateWebSourceRequest } from '@virtualcoach/shared-types';
-import logger from '../config/logger';
+// DEPRECATED: This service was for calling external web-scraping microservice
+// Now integrated directly in backend with BullMQ
+// Kept as stub for backwards compatibility
 
-const baseURL = process.env.WEB_SCRAPING_SERVICE_URL || 'http://localhost:3013';
-const client = new WebScrapingClient({ baseURL });
+export interface WebSource {
+  id: string;
+  kb_id: string;
+  name: string;
+  url: string;
+  auto_refresh: boolean;
+  refresh_frequency_hours?: number;
+  css_selectors?: string;
+  created_at: Date;
+  updated_at: Date;
+}
+
+export interface WebScrapeRun {
+  id: string;
+  source_id: string;
+  status: string;
+  started_at: Date;
+  completed_at?: Date;
+  error?: string;
+}
+
+export interface CreateWebSourceRequest {
+  name: string;
+  url: string;
+  autoRefresh?: boolean;
+  refreshFrequencyHours?: number;
+  cssSelectors?: string;
+}
 
 export type WebSourceInput = CreateWebSourceRequest;
 
 class WebScrapingService {
-  async listSources(twinId: string): Promise<WebSource[]> {
-    return client.listSources(twinId);
+  async listSources(_twinId: string): Promise<WebSource[]> {
+    throw new Error('Web scraping service disabled - functionality integrated in backend');
   }
 
-  async listRuns(twinId: string, sourceId: string, limit: number): Promise<WebScrapeRun[]> {
-    return client.listRuns(twinId, sourceId, limit);
+  async listRuns(_twinId: string, _sourceId: string, _limit: number): Promise<WebScrapeRun[]> {
+    throw new Error('Web scraping service disabled - functionality integrated in backend');
   }
 
-  async createSource(twinId: string, input: WebSourceInput): Promise<WebSource> {
-    return client.createSource(twinId, {
-      twinId,
-      name: input.name,
-      url: input.url,
-      autoRefresh: input.autoRefresh,
-      refreshFrequencyHours: input.refreshFrequencyHours,
-      cssSelectors: input.cssSelectors,
-    });
+  async createSource(_twinId: string, _input: WebSourceInput): Promise<WebSource> {
+    throw new Error('Web scraping service disabled - functionality integrated in backend');
   }
 
-  async updateSource(twinId: string, sourceId: string, input: Partial<WebSourceInput>): Promise<WebSource> {
-    return client.updateSource(twinId, sourceId, {
-      twinId,
-      name: input.name,
-      url: input.url,
-      autoRefresh: input.autoRefresh,
-      refreshFrequencyHours: input.refreshFrequencyHours,
-      cssSelectors: input.cssSelectors,
-    });
+  async updateSource(_twinId: string, _sourceId: string, _input: Partial<WebSourceInput>): Promise<WebSource> {
+    throw new Error('Web scraping service disabled - functionality integrated in backend');
   }
 
-  async deleteSource(twinId: string, sourceId: string): Promise<void> {
-    await client.deleteSource(twinId, sourceId);
+  async deleteSource(_twinId: string, _sourceId: string): Promise<void> {
+    throw new Error('Web scraping service disabled - functionality integrated in backend');
   }
 
-  async triggerScrape(twinId: string, _llmProvider: string | null, sourceId: string, trigger: 'manual' | 'auto'): Promise<{ runId: string }> {
-    logger.info('Triggering scrape via web-scraping-service', { twinId, sourceId, trigger });
-    return client.triggerScrape(twinId, sourceId, { sourceId, force: trigger === 'manual' });
+  async triggerScrape(_twinId: string, _llmProvider: string | null, _sourceId: string, _trigger: 'manual' | 'auto'): Promise<{ runId: string }> {
+    throw new Error('Web scraping service disabled - functionality integrated in backend');
   }
 
-  async downloadScreenshot(runId: string): Promise<{ data: Buffer; contentType: string }> {
-    const response = await axios.get(`${baseURL}/runs/${runId}/screenshot`, {
-      responseType: 'arraybuffer',
-      validateStatus: status => status === 200 || status === 404,
-    });
-
-    if (response.status === 404) {
-      throw new Error('Screenshot not found');
-    }
-
-    return {
-      data: Buffer.from(response.data),
-      contentType: response.headers['content-type'] || 'image/png',
-    };
+  async downloadScreenshot(_runId: string): Promise<{ data: Buffer; contentType: string }> {
+    throw new Error('Web scraping service disabled - functionality integrated in backend');
   }
 }
 

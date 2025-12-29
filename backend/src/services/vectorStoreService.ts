@@ -1,29 +1,39 @@
-import { VectorClient } from '@virtualcoach/sdk';
-import type { VectorUpsertRequest, VectorSearchRequest, VectorSearchResult } from '@virtualcoach/shared-types';
-import logger from '../config/logger';
+// DEPRECATED: This service was for calling external vector store microservice
+// Now integrated directly in database with pgvector
+// Kept as stub for backwards compatibility
 
-const VECTOR_SERVICE_URL = process.env.VECTOR_SERVICE_URL || 'http://localhost:3014';
-const VECTOR_NAMESPACE = process.env.VECTOR_NAMESPACE || 'default';
+export interface VectorUpsertRequest {
+  id: string;
+  vector: number[];
+  metadata?: Record<string, unknown>;
+  namespace?: string;
+}
 
-const client = new VectorClient({ baseURL: VECTOR_SERVICE_URL });
+export interface VectorSearchRequest {
+  vector: number[];
+  topK?: number;
+  limit?: number; // Alias for topK
+  namespace?: string;
+  filter?: Record<string, unknown>;
+}
+
+export interface VectorSearchResult {
+  id: string;
+  score: number;
+  metadata?: Record<string, unknown>;
+}
 
 class VectorStoreService {
   isEnabled(): boolean {
-    return !!process.env.VECTOR_SERVICE_URL;
+    return false; // Microservice no longer used
   }
 
-  async upsertEmbedding(payload: Omit<VectorUpsertRequest, 'namespace'> & { namespace?: string }): Promise<void> {
-    if (!this.isEnabled()) return;
-    try {
-      await client.upsert({ ...payload, namespace: payload.namespace || VECTOR_NAMESPACE });
-    } catch (error) {
-      logger.error('Vector upsert failed', { error });
-    }
+  async upsertEmbedding(_payload: Omit<VectorUpsertRequest, 'namespace'> & { namespace?: string }): Promise<void> {
+    throw new Error('Vector store service disabled - vectors stored in PostgreSQL directly');
   }
 
-  async search(request: VectorSearchRequest): Promise<VectorSearchResult[]> {
-    if (!this.isEnabled()) return [];
-    return client.search({ ...request, namespace: request.namespace || VECTOR_NAMESPACE });
+  async search(_request: VectorSearchRequest): Promise<VectorSearchResult[]> {
+    throw new Error('Vector store service disabled - use PostgreSQL pgvector directly');
   }
 }
 
