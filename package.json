@@ -2,10 +2,8 @@
   "name": "@virtualcoach/monorepo",
   "version": "1.0.0",
   "private": true,
-  "description": "Digital Twin SAAS Platform - Microservices Architecture",
+  "description": "RAG Knowledge Base SAAS Platform - Monorepo",
   "workspaces": [
-    "packages/*",
-    "services/*",
     "backend",
     "frontend"
   ],
