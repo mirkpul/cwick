@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-We have implemented significant optimizations to the RAG system (as of Dec 6, 2025):
+We have implemented significant optimizations to the RAG system (as of Dec 2024):
 1.  ✅ **Scoring System Fix**: Fixed score compression (everything > 68%) and eliminated unbounded scores (>1000%). Precision improved from 85% to 87%.
 2.  ✅ **LLM Cost Optimization**: Reduced LLM calls per query by 60% and embedding generation by 75%.
 

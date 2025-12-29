@@ -90,13 +90,13 @@ You can implement adaptive thresholds in `chatService.js` based on available dat
 
 ```javascript
 async _performEnhancedRAGSearch(conversation, userQuery, conversationHistory) {
-  const kbCount = await this.getKnowledgeBaseCount(conversation.twin_id);
-  
+  const kbCount = await this.getKnowledgeBaseCount(conversation.kb_id);
+
   // Adjust threshold if KB is small
-  const threshold = kbCount < 10 
-    ? 0.60 
+  const threshold = kbCount < 10
+    ? 0.60
     : config.semanticSearch.defaultThreshold;
-    
+
   // ...
 }
 ```

@@ -1,12 +1,12 @@
 # Knowledge Base File Upload API
 
 ## Overview
-Allows uploading parsing, chunking, and embedding of documents (PDF, TXT, MD, CSV) into the knowledge base.
+Allows uploading, parsing, chunking, and embedding of documents (PDF, TXT, MD, CSV, DOCX, PPTX) into the knowledge base.
 
 ## API Endpoints
 
 ### 1. Upload File
-**POST** `/api/digital-twins/:twinId/knowledge/upload`
+**POST** `/api/knowledge-bases/:kbId/knowledge/upload`
 
 **Headers**: `Authorization: Bearer <TOKEN>`, `Content-Type: multipart/form-data`
 
@@ -24,7 +24,7 @@ Allows uploading parsing, chunking, and embedding of documents (PDF, TXT, MD, CS
 ```
 
 ### 2. Search Knowledge
-**GET** `/api/digital-twins/:twinId/knowledge/search?q=query&limit=5`
+**GET** `/api/knowledge-bases/:kbId/knowledge/search?q=query&limit=5`
 
 **Response**:
 ```json
@@ -34,17 +34,18 @@ Allows uploading parsing, chunking, and embedding of documents (PDF, TXT, MD, CS
       "id": "uuid",
       "content": "...",
       "similarity": 0.94,
-      "file_name": "docs.pdf"
+      "file_name": "docs.pdf",
+      "source": "knowledge_base"
     }
   ]
 }
 ```
 
 ### 3. List Files
-**GET** `/api/digital-twins/:twinId/knowledge/files`
+**GET** `/api/knowledge-bases/:kbId/knowledge/files`
 
 ### 4. Delete File
-**DELETE** `/api/digital-twins/:twinId/knowledge/file/:entryId`
+**DELETE** `/api/knowledge-bases/:kbId/knowledge/file/:entryId`
 
 ## Implementation Details
 - **Chunking**: Hybrid strategy (Paragraph -> Sentence) with overlap.

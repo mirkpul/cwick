@@ -1,12 +1,13 @@
-# Contributing to Virtual Coach Platform
+# Contributing to RAG Knowledge Base SAAS Platform
 
 ## Getting Started
 
 ### Prerequisites
-- Node.js 18+
-- PostgreSQL 15+ (with pgvector)
-- Docker
-- OpenAI/Anthropic API keys
+- Node.js 18+ or 20+
+- PostgreSQL 14+ (with pgvector extension)
+- Redis (for web scraping)
+- Docker & Docker Compose
+- At least one LLM API key (OpenAI, Anthropic, or Google)
 
 ### Setup
 1. Fork & Clone.

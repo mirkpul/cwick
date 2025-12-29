@@ -2,18 +2,18 @@
 
 ## What Has Been Built
 
-A complete SAAS platform for professionals to create AI-powered digital twins with:
+A complete SAAS platform for professionals to create AI-powered knowledge bases with advanced RAG capabilities:
 
 ### ✅ Complete Features
-1. **User Authentication** - Register, Login, JWT-based auth
-2. **Onboarding Wizard** - 6-step comprehensive setup
-3. **Multi-Provider AI** - OpenAI (GPT-4) and Anthropic (Claude) support
-4. **Webchat Widget** - Beautiful chat interface for end-users
-5. **Live Handover** - Real-time WebSocket-based chat takeover
-6. **Professional Dashboard** - Limited management panel
-7. **Super Admin Dashboard** - Full platform control
-8. **Knowledge Base** - Add/manage FAQs and information
-9. **Conversation Tracking** - View all chats and analytics
+1. **User Authentication** - Register, Login, JWT-based auth, OAuth (Google/GitHub)
+2. **Multi-Provider LLM Support** - OpenAI (GPT-4, GPT-3.5), Anthropic (Claude 3.x), Google (Gemini)
+3. **Advanced RAG Engine** - Hybrid search, query enhancement, reranking, ensemble balancing
+4. **Multi-Source Knowledge** - Documents (PDF, DOCX, PPTX), Email sync (Gmail/Outlook/IMAP), Web scraping
+5. **Real-time Chat** - WebSocket-based conversations with streaming responses
+6. **Context Preview** - Inspect AI context before generating responses
+7. **Knowledge Base Management** - Add/manage documents, FAQs, and information
+8. **Conversation Tracking** - View all chats and analytics
+9. **Analytics & Monitoring** - RAG logging, token tracking
 10. **Docker Setup** - Complete containerized environment
 11. **CI/CD Pipeline** - Automated testing, validation, and code review workflows
 
@@ -51,34 +51,38 @@ Open your browser:
 - **API**: http://localhost:3001
 - **Health Check**: http://localhost:3001/health
 
-### Step 4: Create Your First Digital Twin
+### Step 4: Create Your First Knowledge Base
 
 1. Go to http://localhost:3000
 2. Click "Get Started" → Register
-3. Complete the 6-step onboarding wizard:
-   - Basic info (name, profession, bio)
-   - AI config (choose OpenAI or Claude)
-   - Personality traits
-   - Capabilities
-   - Services & pricing
-   - Knowledge base
+3. Complete the onboarding:
+   - Basic info (name, email)
+   - Create knowledge base
+   - Configure LLM provider (OpenAI, Anthropic, or Google)
+   - Adjust RAG settings
 
-4. Get your chat widget URL from the dashboard
-5. Test it: http://localhost:3000/chat/{your-twin-id}
+4. Add knowledge to your KB:
+   - Upload documents (PDF, DOCX, TXT, etc.)
+   - Connect email (Gmail/Outlook/IMAP)
+   - Add web scraping sources
+   - Create manual FAQ entries
+
+5. Get your chat widget URL from the dashboard
+6. Test it: http://localhost:3000/chat/{your-kb-id}
 
 ## Testing the Platform
 
 ### Test as End-User
 1. Go to the chat URL from your dashboard
 2. Enter your name
-3. Chat with your digital twin
-4. Ask complex questions to trigger handover
+3. Chat with your knowledge base AI
+4. Ask questions to test RAG retrieval
 
-### Test Live Handover
-1. Open chat in one browser window
-2. Open dashboard in another
-3. When handover triggers, click "Take Over" in dashboard
-4. Send messages as professional
+### Test Context Preview
+1. Open chat interface
+2. Click "Preview Context" before sending message
+3. View what documents/emails the AI will use
+4. Adjust RAG thresholds if needed
 
 ### Test as Super Admin
 1. Login with super admin credentials

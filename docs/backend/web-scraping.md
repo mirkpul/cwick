@@ -8,13 +8,13 @@ The knowledge tab now supports configurable website sources. Every run renders t
 2. **Rendering (backend)** – Each page is rendered headlessly with Chromium (Puppeteer). The HTML is cleaned from obvious overlays (cookies, ads, signup banners). If `SCRAPER_ENABLE_SCREENSHOTS=true`, a PNG is saved per page for debugging.
 3. **Chunking & Ingestion** – Clean text is chunked, embedded, and inserted into `knowledge_base` with metadata (`sourceId`, `url`, `scrapeStrategy`, `screenshotFilename` when enabled, etc.).
 4. **Scheduling** – Auto-refreshing sources are run by a background scheduler. Manual runs can be triggered from the dashboard.
-5. **Screenshots (debug-only)** – Optional PNGs are stored in `data/web-scraping/<twinId>/<runId>/screenshots` only when `SCRAPER_ENABLE_SCREENSHOTS=true`. The dashboard provides authenticated download links when screenshots are present.
+5. **Screenshots (debug-only)** – Optional PNGs are stored in `data/web-scraping/<kbId>/<runId>/screenshots` only when `SCRAPER_ENABLE_SCREENSHOTS=true`. The dashboard provides authenticated download links when screenshots are present.
 
 ## API Overview
 
 | Method | Path | Description |
 | --- | --- | --- |
-| `GET` | `/api/web-scraping` | List sources for the current twin. |
+| `GET` | `/api/web-scraping` | List sources for the current knowledge base. |
 | `POST` | `/api/web-scraping` | Create a source. |
 | `PUT` | `/api/web-scraping/:sourceId` | Update a source. |
 | `DELETE` | `/api/web-scraping/:sourceId` | Delete a source (and its KB entries). |

@@ -14,7 +14,7 @@ The Professional Dashboard supports drag-and-drop file uploads for the knowledge
 - `SemanticSearch.jsx`: Interface for testing retrieval.
 
 ## API Integration
-Uses `digitalTwinAPI` service methods:
+Uses `knowledgeBaseAPI` service methods:
 - `uploadKnowledgeFile`
 - `listKnowledgeFiles`
 - `deleteKnowledgeFile`
