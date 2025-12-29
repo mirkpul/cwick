@@ -9,6 +9,8 @@ import {
   CheckCircleIcon,
   ExclamationTriangleIcon,
   Squares2X2Icon,
+  ArrowUpTrayIcon,
+  ArrowDownTrayIcon,
 } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 import { knowledgeBaseAPI } from '../services/api';
@@ -160,6 +162,44 @@ const RAGConfigPanel: React.FC<RAGConfigPanelProps> = ({ kbId, onConfigChange })
     });
     setHasChanges(true);
     toast('Reset to defaults', { icon: '↩️' });
+  };
+
+  const exportConfig = (): void => {
+    const configJson = JSON.stringify(config, null, 2);
+    const blob = new Blob([configJson], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `rag-config-${kbId}-${Date.now()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success('Configuration exported');
+  };
+
+  const importConfig = (): void => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = (e: Event) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const importedConfig = JSON.parse(event.target?.result as string) as RAGConfig;
+          setConfig(importedConfig);
+          setHasChanges(true);
+          toast.success('Configuration imported successfully');
+        } catch {
+          toast.error('Invalid configuration file');
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
   };
 
   const Tooltip: React.FC<TooltipProps> = ({ text }) => (
@@ -608,13 +648,33 @@ const RAGConfigPanel: React.FC<RAGConfigPanelProps> = ({ kbId, onConfigChange })
 
           {/* Action Buttons */}
           <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-            <button
-              type="button"
-              onClick={resetToDefaults}
-              className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              Reset to Defaults
-            </button>
+            <div className="flex items-center space-x-2">
+              <button
+                type="button"
+                onClick={resetToDefaults}
+                className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                Reset to Defaults
+              </button>
+              <button
+                type="button"
+                onClick={exportConfig}
+                className="inline-flex items-center px-3 py-2 text-sm text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors"
+                title="Export configuration"
+              >
+                <ArrowDownTrayIcon className="h-4 w-4 mr-1" />
+                Export
+              </button>
+              <button
+                type="button"
+                onClick={importConfig}
+                className="inline-flex items-center px-3 py-2 text-sm text-green-600 hover:text-green-800 hover:bg-green-50 rounded-lg transition-colors"
+                title="Import configuration"
+              >
+                <ArrowUpTrayIcon className="h-4 w-4 mr-1" />
+                Import
+              </button>
+            </div>
             <div className="flex items-center space-x-3">
               {hasChanges && (
                 <span className="flex items-center text-sm text-yellow-600">

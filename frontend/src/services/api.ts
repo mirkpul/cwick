@@ -187,6 +187,10 @@ export const knowledgeBaseAPI = {
   // RAG Configuration endpoints
   getRAGConfig: (kbId: string): Promise<AxiosResponse> => api.get(`/knowledge-bases/${kbId}/rag-config`),
   updateRAGConfig: (kbId: string, config: RAGConfig): Promise<AxiosResponse> => api.put(`/knowledge-bases/${kbId}/rag-config`, config),
+
+  // Context Management endpoints
+  previewContext: (kbId: string): Promise<AxiosResponse> => api.get(`/knowledge-bases/${kbId}/context/preview`),
+  updateContext: (kbId: string, customInstructions: string): Promise<AxiosResponse> => api.put(`/knowledge-bases/${kbId}/context`, { customInstructions }),
 };
 
 // Chat API

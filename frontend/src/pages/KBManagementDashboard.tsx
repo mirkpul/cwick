@@ -13,6 +13,8 @@ import EmailSyncStatus from '../components/email/EmailSyncStatus';
 import EmailList from '../components/email/EmailList';
 import EmailSettings from '../components/email/EmailSettings';
 import WebScrapingTab from '../components/web/WebScrapingTab';
+import ConversationsList from '../components/ConversationsList';
+import OverviewTab from '../components/OverviewTab';
 
 interface DigitalTwin {
   id: string;
@@ -30,15 +32,6 @@ interface Conversation {
   end_user_email: string;
   message_count: number;
   status: string;
-  created_at: string;
-}
-
-interface Handover {
-  id: string;
-  end_user_name: string;
-  reason?: string;
-  is_read: boolean;
-  is_accepted: boolean;
   created_at: string;
 }
 
@@ -71,12 +64,11 @@ interface ApiError {
   };
 }
 
-type TabType = 'overview' | 'conversations' | 'handovers' | 'search' | 'knowledge' | 'email' | 'settings';
+type TabType = 'overview' | 'conversations' | 'search' | 'knowledge' | 'email' | 'settings';
 
 const TAB_LABELS: Record<TabType, string> = {
   overview: 'Overview',
   conversations: 'Conversations',
-  handovers: 'Handovers',
   search: 'Semantic Search',
   knowledge: 'Knowledge',
   email: 'Email',
@@ -89,7 +81,6 @@ export default function KBManagementDashboard(): React.JSX.Element {
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [twin, setTwin] = useState<DigitalTwin | null>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [handovers, setHandovers] = useState<Handover[]>([]);
   const [knowledgeBase, setKnowledgeBase] = useState<KnowledgeEntry[]>([]);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFileType[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -115,16 +106,14 @@ export default function KBManagementDashboard(): React.JSX.Element {
 
   const loadDashboardData = async (): Promise<void> => {
     try {
-      const [twinRes, convsRes, handoversRes] = await Promise.all([
+      const [twinRes, convsRes] = await Promise.all([
         knowledgeBaseAPI.getMyKB(),
         chatAPI.getMyConversations(),
-        chatAPI.getHandovers(false),
       ]);
 
       const twinData = twinRes.data.twin;
       setTwin(twinData);
       setConversations(convsRes.data.conversations);
-      setHandovers(handoversRes.data.notifications);
 
       if (twinData) {
         const [kbRes, filesRes, emailStatusRes] = await Promise.all([
@@ -241,7 +230,7 @@ export default function KBManagementDashboard(): React.JSX.Element {
         {/* Tabs */}
         <div className="mb-6 border-b border-gray-200">
           <nav className="flex space-x-8">
-            {(['overview', 'conversations', 'handovers', 'search', 'knowledge', 'email', 'settings'] as TabType[]).map((tab) => (
+            {(['overview', 'conversations', 'search', 'knowledge', 'email', 'settings'] as TabType[]).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -265,123 +254,21 @@ export default function KBManagementDashboard(): React.JSX.Element {
 
         {/* Overview Tab */}
         {activeTab === 'overview' && (
-          <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-2xl font-bold mb-4">Welcome, {user?.full_name}!</h2>
-              <p className="text-gray-600 mb-4">
-                Your digital twin <span className="font-semibold">{twin?.name}</span> is active and ready to engage with visitors.
-              </p>
-
-              <div className="bg-primary-50 border border-primary-200 rounded-lg p-4 mb-4">
-                <p className="text-sm font-medium text-primary-900 mb-2">Your Chat Widget URL:</p>
-                <div className="flex space-x-2">
-                  <input
-                    type="text"
-                    value={getChatUrl()}
-                    readOnly
-                    className="flex-1 px-3 py-2 bg-white border border-primary-300 rounded text-sm"
-                  />
-                  <button
-                    onClick={copyChatUrl}
-                    className="px-4 py-2 bg-primary-600 text-white rounded hover:bg-primary-700"
-                  >
-                    Copy
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-6">
-              <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="text-gray-500 text-sm font-medium">Total Conversations</h3>
-                <p className="text-3xl font-bold text-gray-900 mt-2">{conversations.length}</p>
-              </div>
-              <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="text-gray-500 text-sm font-medium">Pending Handovers</h3>
-                <p className="text-3xl font-bold text-gray-900 mt-2">
-                  {handovers.filter(h => !h.is_read).length}
-                </p>
-              </div>
-              <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="text-gray-500 text-sm font-medium">Knowledge Entries</h3>
-                <p className="text-3xl font-bold text-gray-900 mt-2">{knowledgeBase.length}</p>
-              </div>
-            </div>
-          </div>
+          <OverviewTab
+            userName={user?.full_name || 'User'}
+            kbName={twin?.name || 'Knowledge Base'}
+            chatUrl={getChatUrl()}
+            conversations={conversations}
+            knowledgeBaseCount={knowledgeBase.length}
+            uploadedFilesCount={uploadedFiles.length}
+            emailSyncStatus={emailSyncStatus}
+            onCopyChatUrl={copyChatUrl}
+          />
         )}
 
         {/* Conversations Tab */}
         {activeTab === 'conversations' && (
-          <div className="bg-white rounded-lg shadow">
-            <div className="p-6">
-              <h2 className="text-xl font-bold mb-4">Recent Conversations</h2>
-              {conversations.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">No conversations yet</p>
-              ) : (
-                <div className="space-y-4">
-                  {conversations.map((conv) => (
-                    <div key={conv.id} className="border rounded-lg p-4 hover:bg-gray-50">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="font-semibold">{conv.end_user_name}</p>
-                          <p className="text-sm text-gray-600">{conv.end_user_email}</p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            {conv.message_count} messages · {conv.status}
-                          </p>
-                        </div>
-                        <span className="text-xs text-gray-500">
-                          {new Date(conv.created_at).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Handovers Tab */}
-        {activeTab === 'handovers' && (
-          <div className="bg-white rounded-lg shadow">
-            <div className="p-6">
-              <h2 className="text-xl font-bold mb-4">Handover Notifications</h2>
-              {handovers.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">No handovers</p>
-              ) : (
-                <div className="space-y-4">
-                  {handovers.map((handover) => (
-                    <div
-                      key={handover.id}
-                      className={`border rounded-lg p-4 ${
-                        !handover.is_read ? 'bg-yellow-50 border-yellow-200' : ''
-                      }`}
-                    >
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="font-semibold">{handover.end_user_name}</p>
-                          <p className="text-sm text-gray-600 mt-1">
-                            Reason: {handover.reason || 'Twin requested assistance'}
-                          </p>
-                          <p className="text-xs text-gray-500 mt-2">
-                            {new Date(handover.created_at).toLocaleString()}
-                          </p>
-                        </div>
-                        {!handover.is_accepted && (
-                          <button
-                            className="px-4 py-2 bg-primary-600 text-white rounded hover:bg-primary-700 text-sm"
-                            onClick={() => window.open(`/chat/${twin!.id}`, '_blank')}
-                          >
-                            Take Over
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
+          <ConversationsList conversations={conversations} />
         )}
 
         {/* Semantic Search Tab */}

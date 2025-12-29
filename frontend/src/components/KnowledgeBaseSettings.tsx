@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { knowledgeBaseAPI } from '../services/api';
 import toast from 'react-hot-toast';
+import ContextPreview from './ContextPreview';
 
 interface Capabilities {
   q_and_a: boolean;
@@ -666,9 +667,12 @@ export default function KnowledgeBaseSettings({ twin, onUpdate }: KnowledgeBaseS
           </label>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Custom System Prompt (Advanced)
-            </label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Custom System Prompt (Advanced)
+              </label>
+              <ContextPreview kbId={twin.id} />
+            </div>
             <textarea
               rows={4}
               value={formData.system_prompt}
@@ -677,7 +681,7 @@ export default function KnowledgeBaseSettings({ twin, onUpdate }: KnowledgeBaseS
               placeholder="Additional instructions for the AI (optional)..."
             />
             <p className="text-xs text-gray-500 mt-1">
-              These instructions will be appended to the auto-generated context
+              These instructions will be appended to the auto-generated context. Click "Preview Full Context" to see what the AI will see.
             </p>
           </div>
         </div>
