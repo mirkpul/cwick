@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 import { Request, Response, NextFunction } from 'express';
 import logger from '../config/logger';
 
-interface JwtPayload {
+export interface JwtPayload {
   userId: string;
   email: string;
   role: string;
@@ -10,9 +10,8 @@ interface JwtPayload {
   exp?: number;
 }
 
-export interface AuthenticatedRequest extends Request {
-  user?: JwtPayload;
-}
+// Type alias for clarity - Request now has 'user' via global declaration
+export type AuthenticatedRequest = Request;
 
 export const auth = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   try {

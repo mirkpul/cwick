@@ -3,12 +3,12 @@ import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
 import { vi, describe, it, expect, beforeEach, Mock } from 'vitest';
 import BenchmarkDashboard from './BenchmarkDashboard';
-import { benchmarkAPI, digitalTwinAPI } from '../../services/api';
+import { benchmarkAPI, knowledgeBaseAPI } from '../../services/api';
 
 // Mock the APIs
 vi.mock('../../services/api', () => ({
-  digitalTwinAPI: {
-    getMyTwin: vi.fn(),
+  knowledgeBaseAPI: {
+    getMyKnowledgeBase: vi.fn(),
   },
   benchmarkAPI: {
     listDatasets: vi.fn(),
@@ -82,7 +82,7 @@ describe('BenchmarkDashboard', () => {
     vi.clearAllMocks();
     mockNavigate.mockClear();
 
-    (digitalTwinAPI.getMyTwin as Mock).mockResolvedValue({
+    (knowledgeBaseAPI.getMyKB as Mock).mockResolvedValue({
       data: { twin: mockTwin },
     });
     (benchmarkAPI.listDatasets as Mock).mockResolvedValue({
@@ -245,7 +245,7 @@ describe('BenchmarkDashboard', () => {
   });
 
   it('redirects to onboarding if no twin exists', async () => {
-    (digitalTwinAPI.getMyTwin as Mock).mockRejectedValue({
+    (knowledgeBaseAPI.getMyKB as Mock).mockRejectedValue({
       response: { status: 404 },
     });
 
@@ -257,7 +257,7 @@ describe('BenchmarkDashboard', () => {
   });
 
   it('shows error toast on API failure', async () => {
-    (digitalTwinAPI.getMyTwin as Mock).mockRejectedValue(new Error('Network error'));
+    (knowledgeBaseAPI.getMyKB as Mock).mockRejectedValue(new Error('Network error'));
     const toast = await import('react-hot-toast');
 
     renderDashboard();

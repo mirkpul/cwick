@@ -42,8 +42,13 @@ class AuthController {
 
   async getMe(req: Request, res: Response, next: NextFunction) {
     try {
-      // @ts-expect-error - req.user is added by auth middleware
       const userId = req.user?.userId;
+
+      if (!userId) {
+        res.status(401).json({ error: 'User not authenticated' });
+        return;
+      }
+
       const user = await authService.getUserById(userId);
       res.json({ user });
     } catch (error) {

@@ -681,7 +681,7 @@ export default function KnowledgeBaseSettings({ twin, onUpdate }: KnowledgeBaseS
               placeholder="Additional instructions for the AI (optional)..."
             />
             <p className="text-xs text-gray-500 mt-1">
-              These instructions will be appended to the auto-generated context. Click "Preview Full Context" to see what the AI will see.
+              These instructions will be appended to the auto-generated context. Click &ldquo;Preview Full Context&rdquo; to see what the AI will see.
             </p>
           </div>
         </div>

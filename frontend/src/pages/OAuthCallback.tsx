@@ -16,6 +16,7 @@ const OAuthCallback = () => {
         const errorParam = searchParams.get('error');
 
         if (errorParam) {
+          // eslint-disable-next-line no-console
           console.error('OAuth error:', errorParam);
           setError(getErrorMessage(errorParam));
           setTimeout(() => navigate('/login'), 3000);
@@ -37,6 +38,7 @@ const OAuthCallback = () => {
         // Redirect to dashboard
         navigate('/dashboard');
       } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('OAuth callback error:', err);
         setError('Authentication failed. Please try again.');
         setTimeout(() => navigate('/login'), 3000);

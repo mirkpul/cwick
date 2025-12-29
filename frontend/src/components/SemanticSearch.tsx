@@ -169,7 +169,7 @@ const SemanticSearch: React.FC<SemanticSearchProps> = ({ twinId }) => {
   return (
     <div className="space-y-6">
       {/* RAG Configuration Panel */}
-      <RAGConfigPanel twinId={twinId} onConfigChange={setRagConfig} />
+      <RAGConfigPanel kbId={twinId} onConfigChange={setRagConfig} />
 
       {/* Search Form */}
       <div className="bg-white rounded-lg border border-gray-200 p-6">

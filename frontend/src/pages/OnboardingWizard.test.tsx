@@ -4,13 +4,13 @@ import { BrowserRouter } from 'react-router-dom';
 import { vi, describe, it, expect, beforeEach, Mock } from 'vitest';
 import OnboardingWizard from './OnboardingWizard';
 import { AuthProvider } from '../context/AuthContext';
-import { digitalTwinAPI } from '../services/api';
+import { knowledgeBaseAPI } from '../services/api';
 
 // Mock the API
 vi.mock('../services/api', () => ({
-  digitalTwinAPI: {
+  knowledgeBaseAPI: {
     create: vi.fn(),
-    getMyTwin: vi.fn(),
+    getMyKB: vi.fn(),
   },
 }));
 
@@ -39,7 +39,7 @@ describe('OnboardingWizard', () => {
     mockNavigate.mockClear();
 
     // Mock getMyTwin to return 404 (no existing twin)
-    (digitalTwinAPI.getMyTwin as Mock).mockRejectedValue({
+    (knowledgeBaseAPI.getMyKB as Mock).mockRejectedValue({
       response: { status: 404 }
     });
   });
@@ -187,7 +187,7 @@ describe('OnboardingWizard', () => {
       profession: 'Life Coach',
     };
 
-    (digitalTwinAPI.create as Mock).mockResolvedValue({
+    (knowledgeBaseAPI.create as Mock).mockResolvedValue({
       data: { twin: mockTwin },
     });
 
@@ -221,7 +221,7 @@ describe('OnboardingWizard', () => {
     await user.click(completeButton);
 
     await waitFor(() => {
-      expect(digitalTwinAPI.create).toHaveBeenCalled();
+      expect(knowledgeBaseAPI.create).toHaveBeenCalled();
       expect(mockNavigate).toHaveBeenCalledWith('/dashboard');
     });
   });

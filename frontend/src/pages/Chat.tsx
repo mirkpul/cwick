@@ -263,14 +263,9 @@ export default function Chat() {
               className={`max-w-xs lg:max-w-md px-4 py-3 rounded-lg ${
                 message.sender === 'user'
                   ? 'bg-primary-600 text-white'
-                  : message.sender === 'professional'
-                  ? 'bg-green-600 text-white'
                   : 'bg-white text-gray-900 shadow-sm'
               }`}
             >
-              {message.sender === 'professional' && (
-                <p className="text-xs mb-1 opacity-90">Professional joined</p>
-              )}
               <p className="whitespace-pre-wrap break-words">{message.content}</p>
               <p className="text-xs mt-1 opacity-75">
                 {new Date(message.created_at).toLocaleTimeString()}

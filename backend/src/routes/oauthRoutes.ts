@@ -22,7 +22,8 @@ router.get(
     }),
     (req: Request, res: Response) => {
         try {
-            const user = req.user as Record<string, unknown>;
+            // OAuth returns database user object (id, email, role), not JwtPayload (userId)
+            const user = req.user as unknown as Record<string, unknown>;
 
             if (!user) {
                 return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=no_user`);
@@ -66,7 +67,8 @@ router.get(
     }),
     (req: Request, res: Response) => {
         try {
-            const user = req.user as Record<string, unknown>;
+            // OAuth returns database user object (id, email, role), not JwtPayload (userId)
+            const user = req.user as unknown as Record<string, unknown>;
 
             if (!user) {
                 return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=no_user`);
