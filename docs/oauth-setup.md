@@ -32,7 +32,7 @@ The platform supports two types of OAuth flows:
    - Authorized domains: Your domain (or localhost for development)
 6. Create OAuth 2.0 Client ID:
    - Application type: Web application
-   - Name: Digital Twin Login
+   - Name: RAG Knowledge Base Login
    - Authorized redirect URIs: `http://localhost:3001/api/oauth/auth/google/callback`
 7. Copy **Client ID** and **Client Secret**
 
@@ -74,7 +74,7 @@ FRONTEND_URL=http://localhost:3000
 4. Go to **Credentials** → **Create Credentials** → **OAuth 2.0 Client ID**
 5. Create OAuth 2.0 Client ID:
    - Application type: Web application
-   - Name: Digital Twin Email Integration
+   - Name: RAG Knowledge Base Email Integration
    - Authorized redirect URIs: `http://localhost:3001/api/email/auth/gmail/callback`
 6. Copy **Client ID** and **Client Secret**
 
@@ -91,7 +91,7 @@ GMAIL_REDIRECT_URI=http://localhost:3001/api/email/auth/gmail/callback
 2. Navigate to **Azure Active Directory** → **App registrations**
 3. Click **New registration**
 4. Fill in the details:
-   - Name: Digital Twin Email Integration
+   - Name: RAG Knowledge Base Email Integration
    - Supported account types: Accounts in any organizational directory and personal Microsoft accounts
    - Redirect URI: Web - `http://localhost:3001/api/email/auth/outlook/callback`
 5. Copy **Application (client) ID**

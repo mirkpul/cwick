@@ -1,6 +1,6 @@
-# Digital Twin SAAS Platform
+# RAG Knowledge Base SAAS Platform
 
-A comprehensive SAAS platform for professionals to create and manage AI-powered digital twins. Inspired by Botpress, it enables creating conversational AI agents (OpenAI/Anthropic) that can handle Q&A, scheduling, and seamless human handover.
+A comprehensive SAAS platform for professionals to create and manage AI-powered knowledge bases with advanced RAG (Retrieval-Augmented Generation) capabilities. Create conversational AI agents powered by OpenAI (GPT-4), Anthropic (Claude), or Google (Gemini) that can handle Q&A, consultations, and leverage uploaded documents, emails, and web scraping for contextual responses.
 
 ## 📚 Documentation
 
@@ -29,13 +29,24 @@ The documentation has been reorganized into the `docs/` directory:
 - **Frontend**: React 18, Vite, Tailwind CSS.
 - **Infrastructure**: Docker, Nginx.
 
-## Architecture Status
+## Features
 
-- ✅ **Authentication**: JWT-based (Users, Super Admins).
-- ✅ **Digital Twins**: Configurable personas and knowledge bases.
-- ✅ **RAG Engine**: Advanced hybrid search (Vector + BM25), Reranking, and Adaptive Filtering.
-- ✅ **Email Integration**: Gmail/Outlook sync for personalized context.
-- ✅ **Real-time Chat**: WebSocket-based with "Professional Takeover" capability.
+- ✅ **Multi-Provider LLM Support**: OpenAI (GPT-4), Anthropic (Claude 3.5), Google (Gemini Pro)
+- ✅ **Authentication**: JWT + OAuth (Google/GitHub login)
+- ✅ **Knowledge Bases**: Configurable AI agents with custom LLM settings
+- ✅ **Advanced RAG Engine**:
+  - Hybrid Search (Vector + BM25)
+  - Reranking & Diversity Filtering
+  - Temporal Decay & MMR
+  - Configurable thresholds per source type
+- ✅ **Multi-Source Knowledge**:
+  - Document Upload (PDF, TXT, MD, CSV)
+  - Email Sync (Gmail/Outlook/IMAP)
+  - Web Scraping (scheduled with BullMQ)
+  - Manual Q&A Entries
+- ✅ **Real-time Chat**: WebSocket-based conversations
+- ✅ **RAG Benchmarking**: Dataset creation, evaluation, comparison
+- ✅ **Context Preview**: See exactly what the AI sees
 
 ## Quick Start (Docker)
 

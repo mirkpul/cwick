@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Digital Twin SAAS Platform - A comprehensive platform for professionals to create and manage AI-powered digital twins. The system enables professionals to create conversational AI agents powered by OpenAI (GPT-4) or Anthropic (Claude) that can handle Q&A, consultations, scheduling, and seamlessly handover to humans when needed.
+RAG Knowledge Base SAAS Platform - A comprehensive platform for professionals to create and manage AI-powered knowledge bases with advanced RAG (Retrieval-Augmented Generation) capabilities. The system enables professionals to create conversational AI agents powered by OpenAI (GPT-4), Anthropic (Claude), or Google (Gemini) that can handle Q&A, provide consultations, and leverage uploaded documents, emails, and web scraping for contextual responses.
 
 ## Tech Stack
 
@@ -119,9 +119,9 @@ Key backend components:
 
 - **`src/server.ts`**: Main entry point, initializes Express app, middleware, routes, and WebSocket server
 - **Routes**:
-  - `authRoutes.ts`: Authentication (register, login)
-  - `digitalTwinRoutes.ts`: Twin CRUD, knowledge base management
-  - `chatRoutes.ts`: Conversations, messages, handovers
+  - `authRoutes.ts`: Authentication (register, login, OAuth)
+  - `knowledgeBaseRoutes.ts`: Knowledge base CRUD, context management, RAG configuration
+  - `chatRoutes.ts`: Conversations and messages
   - `emailRoutes.ts`: Email knowledge base integration (Gmail/Outlook/IMAP)
 - **Services**:
   - `authService.ts`: Authentication and JWT handling
@@ -152,21 +152,22 @@ React application with:
 PostgreSQL with pgvector extension for semantic search.
 
 **Core Tables**:
-- `users`: Professionals and super admins (role: 'super_admin' | 'professional')
-- `digital_twins`: AI twin configurations (one per user)
+- `users`: KB owners and super admins (role: 'super_admin' | 'kb_owner')
+- `knowledge_bases`: Knowledge base configurations (one per user, LLM settings, RAG config)
 - `knowledge_base`: FAQ entries with vector embeddings for semantic search
 - `email_knowledge`: Imported emails with embeddings (from Gmail/Outlook/IMAP)
 - `email_credentials`: Encrypted OAuth tokens and IMAP credentials
-- `end_users`: People who chat with digital twins
-- `conversations`: Chat sessions with status tracking (active, handed_over, closed)
-- `messages`: Individual messages (sender: 'user' | 'twin' | 'professional')
-- `handover_notifications`: Notifications when AI needs human takeover
+- `end_users`: People who chat with knowledge bases
+- `conversations`: Chat sessions with status tracking (active, closed)
+- `messages`: Individual messages (sender: 'user' | 'assistant')
 
 **Key Features**:
 - Vector embeddings (1536 dimensions) using OpenAI's text-embedding-3-small
-- Semantic search threshold configurable per twin (default 0.80)
+- Advanced hybrid search (Vector + BM25) with configurable weights
+- Reranking and diversity filtering for optimal results
+- Semantic search threshold configurable per knowledge base (default 0.70)
 - Email sync history tracking
-- Automatic email count enforcement per subscription tier
+- Web scraping with BullMQ scheduler and optional screenshots
 
 ### Email Knowledge Base Integration
 
@@ -197,16 +198,16 @@ WebSocket server runs on same port as HTTP server (3001), path: `/ws`
 - `authenticate`: Authenticate WebSocket connection
 - `join_conversation`: Join a conversation room
 - `send_message`: Send message in conversation
-- `professional_takeover`: Professional takes over from AI
 
 ### LLM Integration
 
 Supports multiple providers with unified interface:
 
-- **OpenAI**: GPT-4, GPT-3.5
-- **Anthropic**: Claude 3 (Opus, Sonnet, Haiku)
+- **OpenAI**: GPT-4, GPT-3.5-Turbo
+- **Anthropic**: Claude 3 (Opus, Sonnet, Haiku), Claude 3.5 Sonnet
+- **Google**: Gemini Pro, Gemini Pro Vision
 
-Configuration stored per digital twin: `llm_provider`, `llm_model`, `temperature`, `max_tokens`, `system_prompt`
+Configuration stored per knowledge base: `llm_provider`, `llm_model`, `temperature`, `max_tokens`, `system_prompt`
 
 ## Testing Strategy
 
@@ -234,6 +235,7 @@ DATABASE_URL=postgresql://digitaltwin_user:digitaltwin_pass@localhost:5432/digit
 # LLM Providers (at least one required)
 OPENAI_API_KEY=sk-...
 ANTHROPIC_API_KEY=sk-ant-...
+GEMINI_API_KEY=...
 
 # Authentication
 JWT_SECRET=your-super-secret-key-change-in-production
@@ -327,23 +329,24 @@ All code must pass:
 
 **For detailed OAuth setup instructions, see `docs/oauth-setup.md`**
 
-### Semantic Search Pattern
+### RAG (Retrieval-Augmented Generation) Pattern
 
-1. User uploads knowledge or emails are synced
+1. User uploads knowledge (documents, manual entries) or emails are synced
 2. Content is embedded using OpenAI embeddings API (1536 dimensions)
-3. Embedding stored in PostgreSQL with pgvector
-4. During chat, relevant context retrieved via vector similarity search
-5. Top results (configurable, default 3) added to LLM context
-6. Similarity threshold configurable per twin (default 0.80)
-
-### Handover Flow
-
-1. AI twin detects low confidence or explicit user request
-2. `handover_notifications` record created
-3. WebSocket notification sent to professional
-4. Conversation status updated to 'handed_over'
-5. Professional can respond via chat interface
-6. Messages from professional sent with sender='professional'
+3. Embeddings stored in PostgreSQL with pgvector extension
+4. During chat, relevant context retrieved via:
+   - **Hybrid Search**: Combines vector similarity (semantic) + BM25 (keyword)
+   - **Reranking**: Orders results by relevance score
+   - **Diversity Filtering**: Removes similar/redundant results
+5. Top results (configurable, default 5) added to LLM context
+6. Similarity thresholds configurable per knowledge base:
+   - Knowledge base entries: default 0.70
+   - Email messages: default 0.65
+7. Advanced features:
+   - Temporal decay for time-sensitive content
+   - MMR (Maximal Marginal Relevance) for diverse answers
+   - Semantic boost for highly relevant terms
+   - Configurable max results ratio per source type
 
 ## Common Gotchas
 
