@@ -19,7 +19,6 @@ describe('LLM Service', () => {
         it('should generate embedding with default provider (openai)', async () => {
             // This test verifies the service can handle embedding requests
             // In real scenarios, we'd mock the OpenAI client
-            const text = 'Test embedding text';
 
             // Just verify the method exists and accepts correct parameters
             expect(llmService.generateEmbedding).toBeDefined();

@@ -5,8 +5,6 @@ import LLMService, { LLMProvider } from './llmService';
 import FileProcessingService from './fileProcessingService';
 import vectorStoreService from './vectorStoreService';
 
-type JsonValue = Record<string, unknown> | null;
-
 export interface KnowledgeBase {
     id: string;
     user_id: string;

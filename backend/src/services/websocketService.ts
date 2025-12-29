@@ -3,7 +3,6 @@ import jwt from 'jsonwebtoken';
 import { Server as HTTPServer } from 'http';
 import logger from '../config/logger';
 import chatService from './chatService';
-import db from '../config/database';
 
 interface CustomWebSocket extends WebSocket {
   userId?: string;

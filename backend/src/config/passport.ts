@@ -3,7 +3,6 @@ import { Strategy as GoogleStrategy, Profile as GoogleProfile } from 'passport-g
 import { Strategy as GitHubStrategy, Profile as GitHubProfile } from 'passport-github2';
 import db from './database';
 import logger from './logger';
-import bcrypt from 'bcrypt';
 
 // Google OAuth Strategy
 if (process.env.GOOGLE_OAUTH_CLIENT_ID && process.env.GOOGLE_OAUTH_CLIENT_SECRET) {
