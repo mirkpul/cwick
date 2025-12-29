@@ -1,7 +1,7 @@
 {
-  "name": "digitaltwin-backend",
+  "name": "rag-knowledgebase-backend",
   "version": "1.0.0",
-  "description": "Digital Twin SAAS Backend API",
+  "description": "RAG Knowledge Base SAAS Platform - Backend API",
   "main": "src/server.js",
   "scripts": {
     "start": "node dist/server.js",
@@ -14,12 +14,18 @@
     "type-check": "tsc --noEmit"
   },
   "keywords": [
-    "digital-twin",
+    "rag",
+    "knowledge-base",
     "saas",
     "chatbot",
-    "ai"
+    "ai",
+    "llm",
+    "openai",
+    "anthropic",
+    "vector-search",
+    "semantic-search"
   ],
-  "author": "",
+  "author": "Virtual Coach Team",
   "license": "MIT",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.12.0",

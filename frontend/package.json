@@ -1,7 +1,7 @@
 {
-  "name": "digitaltwin-frontend",
+  "name": "rag-knowledgebase-frontend",
   "version": "1.0.0",
-  "description": "Digital Twin SAAS Frontend",
+  "description": "RAG Knowledge Base SAAS Platform - Frontend",
   "private": true,
   "dependencies": {
     "@heroicons/react": "^2.1.1",
