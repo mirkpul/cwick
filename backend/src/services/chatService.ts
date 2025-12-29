@@ -742,9 +742,9 @@ class ChatService {
                     score: result.score,
                     source: result.source_type,
                     file_name: result.file_name,
-                    title: result.metadata?.title,
-                    senderName: result.metadata?.senderName,
-                    senderEmail: result.metadata?.senderEmail,
+                    title: result.metadata?.title as string | undefined,
+                    senderName: result.metadata?.senderName as string | undefined,
+                    senderEmail: result.metadata?.senderEmail as string | undefined,
                 }));
             }
 
