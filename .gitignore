@@ -5,6 +5,8 @@ node_modules/
 
 # Testing
 /coverage
+backend/coverage/
+frontend/coverage/
 .jest-cache/
 
 # Production
