@@ -1,8 +1,10 @@
 FROM node:20-bullseye-slim
 
+# Puppeteer configuration for web scraping
 ENV PUPPETEER_SKIP_DOWNLOAD=true \
     PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     chromium \
     ca-certificates \
@@ -14,16 +16,19 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-COPY package.json package-lock.json* ./
-COPY packages/ ./packages/
+# Copy root package files for workspace setup
+COPY package.json package-lock.json ./
+
+# Copy backend source
 COPY backend/ ./backend/
 
+# Install all dependencies (includes backend workspace)
 RUN npm ci
-RUN npm run build --workspace=@virtualcoach/shared-types
-RUN npm run build --workspace=@virtualcoach/shared-config
-RUN npm run build --workspace=@virtualcoach/shared-utils
-RUN npm run build --workspace=@virtualcoach/sdk
+
+# Build TypeScript
+RUN npm run build --workspace=backend
 
 EXPOSE 3001
 
-CMD ["npm", "run", "dev"]
+# Development mode
+CMD ["npm", "run", "dev", "--workspace=backend"]
