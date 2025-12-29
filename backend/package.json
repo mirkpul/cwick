@@ -11,7 +11,8 @@
     "test:coverage": "node --max-old-space-size=4096 ../node_modules/.bin/jest --runInBand --coverage",
     "lint": "eslint 'src/**/*.{ts,js}'",
     "lint:fix": "eslint 'src/**/*.{ts,js}' --fix",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "create-test-user": "ts-node src/scripts/createTestUser.ts"
   },
   "keywords": [
     "rag",
