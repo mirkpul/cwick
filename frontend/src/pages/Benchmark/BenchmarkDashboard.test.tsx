@@ -8,7 +8,7 @@ import { benchmarkAPI, knowledgeBaseAPI } from '../../services/api';
 // Mock the APIs
 vi.mock('../../services/api', () => ({
   knowledgeBaseAPI: {
-    getMyKnowledgeBase: vi.fn(),
+    getMyKB: vi.fn(),
   },
   benchmarkAPI: {
     listDatasets: vi.fn(),
@@ -83,7 +83,7 @@ describe('BenchmarkDashboard', () => {
     mockNavigate.mockClear();
 
     (knowledgeBaseAPI.getMyKB as Mock).mockResolvedValue({
-      data: { twin: mockTwin },
+      data: { knowledgeBase: mockTwin },
     });
     (benchmarkAPI.listDatasets as Mock).mockResolvedValue({
       data: mockDatasets,
@@ -220,7 +220,7 @@ describe('BenchmarkDashboard', () => {
 
     await waitFor(() => {
       expect(benchmarkAPI.createDataset).toHaveBeenCalledWith({
-        twin_id: 'twin-123',
+        kb_id: 'twin-123',
         name: 'My New Dataset',
         description: 'A test description',
         dataset_type: 'golden',
