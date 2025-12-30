@@ -124,7 +124,7 @@ const EmailSettings: React.FC<EmailSettingsProps> = ({ syncStatus, onDisconnect 
                 <ul className="text-xs text-blue-800 mt-2 space-y-1 list-disc list-inside">
                   <li>Emails are encrypted at rest in our database</li>
                   <li>Only you can access your imported emails</li>
-                  <li>Email content is used exclusively for your digital twin&apos;s knowledge base</li>
+                  <li>Email content is used exclusively for your knowledge base</li>
                   <li>We never share your email data with third parties</li>
                   <li>Disconnecting will permanently delete all imported emails</li>
                 </ul>

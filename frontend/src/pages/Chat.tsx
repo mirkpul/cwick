@@ -228,7 +228,7 @@ export default function Chat() {
             <span className="text-white font-bold">AI</span>
           </div>
           <div>
-            <h3 className="font-semibold text-gray-900">Digital Twin Assistant</h3>
+            <h3 className="font-semibold text-gray-900">AI Assistant</h3>
             <p className="text-xs text-gray-500">
               {connected ? (
                 <span className="flex items-center">

@@ -82,7 +82,7 @@ export default function SuperAdminDashboard() {
             <p className="text-sm text-green-600 mt-1">+12% from last month</p>
           </div>
           <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-gray-500 text-sm font-medium">Digital Twins</h3>
+            <h3 className="text-gray-500 text-sm font-medium">Knowledge Bases</h3>
             <p className="text-3xl font-bold text-gray-900 mt-2">{stats.totalTwins}</p>
             <p className="text-sm text-green-600 mt-1">+8% from last month</p>
           </div>

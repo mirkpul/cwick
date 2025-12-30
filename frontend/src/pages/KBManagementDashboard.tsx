@@ -212,7 +212,7 @@ export default function KBManagementDashboard(): React.JSX.Element {
       <nav className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
-            <span className="text-xl font-bold text-primary-600">Digital Twin Dashboard</span>
+            <span className="text-xl font-bold text-primary-600">Knowledge Base Dashboard</span>
             <div className="flex items-center space-x-4">
               <span className="text-gray-700">{user?.full_name}</span>
               <button
@@ -404,7 +404,7 @@ export default function KBManagementDashboard(): React.JSX.Element {
         {/* Settings Tab */}
         {activeTab === 'settings' && twin && (
           <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-bold mb-6">Digital Twin Settings</h2>
+            <h2 className="text-xl font-bold mb-6">Knowledge Base Settings</h2>
             <KnowledgeBaseSettings twin={twin} onUpdate={loadDashboardData} />
           </div>
         )}

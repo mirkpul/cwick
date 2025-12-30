@@ -31,7 +31,7 @@ export default function Login() {
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
           <Link to="/" className="text-3xl font-bold text-primary-600">
-            Digital Twin
+            RAG Knowledge Base
           </Link>
           <h2 className="mt-6 text-3xl font-bold text-gray-900">Welcome back</h2>
           <p className="mt-2 text-gray-600">Sign in to your account</p>

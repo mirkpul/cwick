@@ -36,8 +36,8 @@ export default function Register(): React.JSX.Element {
       return await register(values.email, values.password, values.fullName);
     },
     onSuccess: () => {
-      toast.success('Account created successfully!');
-      navigate('/onboarding');
+      toast.success('Account created successfully! Welcome to your dashboard.');
+      navigate('/dashboard');
     },
   });
 
@@ -46,10 +46,10 @@ export default function Register(): React.JSX.Element {
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
           <Link to="/" className="text-3xl font-bold text-primary-600">
-            Digital Twin
+            RAG Knowledge Base
           </Link>
           <h2 className="mt-6 text-3xl font-bold text-gray-900">Create your account</h2>
-          <p className="mt-2 text-gray-600">Start your free trial today</p>
+          <p className="mt-2 text-gray-600">Start building your AI-powered knowledge base</p>
         </div>
 
         <div className="bg-white py-8 px-6 shadow-lg rounded-lg">
