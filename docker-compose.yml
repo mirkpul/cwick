@@ -32,7 +32,7 @@ services:
     networks:
       - knowledgebase-network
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U knowledgebase_user -d digitaltwin" ]
+      test: [ "CMD-SHELL", "pg_isready -U knowledgebase_user -d knowledgebase" ]
       interval: 10s
       timeout: 5s
       retries: 5
