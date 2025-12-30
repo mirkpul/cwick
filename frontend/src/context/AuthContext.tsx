@@ -71,7 +71,7 @@ export function AuthProvider({ children }: AuthProviderProps): React.JSX.Element
 
   const register = async (email: string, password: string, fullName: string) => {
     try {
-      const response = await authAPI.register({ email, password, name: fullName });
+      const response = await authAPI.register({ email, password, fullName });
       const { user, token } = response.data;
 
       saveAuth(token, user);

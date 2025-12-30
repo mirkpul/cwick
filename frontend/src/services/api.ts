@@ -43,7 +43,7 @@ api.interceptors.response.use(
 interface RegisterData {
   email: string;
   password: string;
-  name: string;
+  fullName: string;
 }
 
 interface LoginData {
