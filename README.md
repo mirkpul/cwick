@@ -225,7 +225,7 @@ npm run test:coverage
 
 ```env
 # Database
-DATABASE_URL=postgresql://knowledgebase_user:knowledgebase_pass@localhost:5432/digitaltwin
+DATABASE_URL=postgresql://knowledgebase_user:knowledgebase_pass@localhost:5432/knowledgebase
 
 # LLM Providers (at least one required)
 OPENAI_API_KEY=sk-...
