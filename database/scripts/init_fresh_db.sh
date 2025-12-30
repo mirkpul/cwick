@@ -5,10 +5,10 @@
 
 set -e
 
-DB_USER="${DB_USER:-digitaltwin_user}"
+DB_USER="${DB_USER:-knowledgebase_user}"
 DB_NAME="${DB_NAME:-digitaltwin}"
 DB_HOST="${DB_HOST:-localhost}"
-DB_PASSWORD="${DB_PASSWORD:-digitaltwin_pass}"
+DB_PASSWORD="${DB_PASSWORD:-knowledgebase_pass}"
 
 echo "🚀 Initializing fresh database..."
 echo "Database: $DB_NAME@$DB_HOST"

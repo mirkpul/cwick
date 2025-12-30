@@ -9,10 +9,10 @@
 -- Role: kb_owner (professional)
 --
 -- To apply this script to Docker database:
--- docker exec -i digitaltwin-db psql -U digitaltwin_user -d digitaltwin < database/seed/test_user.sql
+-- docker exec -i knowledgebase-db psql -U knowledgebase_user -d knowledgebase < database/seed/test_user.sql
 --
 -- Or from inside the container:
--- docker exec -it digitaltwin-db psql -U digitaltwin_user -d digitaltwin -f /docker-entrypoint-initdb.d/seed_test_user.sql
+-- docker exec -it knowledgebase-db psql -U knowledgebase_user -d knowledgebase -f /docker-entrypoint-initdb.d/seed_test_user.sql
 -- ============================================
 
 -- Password hash for "Test123456!" (bcrypt with salt rounds = 10)
