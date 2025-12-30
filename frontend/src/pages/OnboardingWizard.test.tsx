@@ -58,7 +58,7 @@ describe('OnboardingWizard', () => {
       expect(screen.getByText('Basic Information')).toBeInTheDocument();
     });
 
-    expect(screen.getByLabelText(/Digital Twin Name/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Knowledge Base Name/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Profession/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Bio \/ About You/i)).toBeInTheDocument();
   });
@@ -86,7 +86,7 @@ describe('OnboardingWizard', () => {
 
     // Should show error for name
     await waitFor(() => {
-      expect(toast.default.error).toHaveBeenCalledWith('Digital Twin Name is required');
+      expect(toast.default.error).toHaveBeenCalledWith('Knowledge Base Name is required');
     }, { timeout: 10000 });
   });
 
@@ -107,7 +107,7 @@ describe('OnboardingWizard', () => {
     });
 
     // Fill required fields
-    await user.type(screen.getByLabelText(/Digital Twin Name/i), 'Coach John AI');
+    await user.type(screen.getByLabelText(/Knowledge Base Name/i), 'Coach John AI');
     await user.type(screen.getByLabelText(/Profession/i), 'Life Coach');
 
     // Click next
@@ -156,7 +156,7 @@ describe('OnboardingWizard', () => {
     });
 
     // Fill step 1
-    await user.type(screen.getByLabelText(/Digital Twin Name/i), 'Coach John AI');
+    await user.type(screen.getByLabelText(/Knowledge Base Name/i), 'Coach John AI');
     await user.type(screen.getByLabelText(/Profession/i), 'Life Coach');
     await user.click(screen.getByRole('button', { name: /Next/i }));
 
@@ -175,11 +175,11 @@ describe('OnboardingWizard', () => {
     // Should show capabilities on step 4
     await waitFor(() => {
       expect(screen.getByText('Capabilities')).toBeInTheDocument();
-      expect(screen.getByText(/What should your digital twin be able to do/i)).toBeInTheDocument();
+      expect(screen.getByText(/What should your knowledge base be able to do/i)).toBeInTheDocument();
     });
   });
 
-  it('creates digital twin successfully', async () => {
+  it('creates knowledge base successfully', async () => {
     const user = userEvent.setup();
     const mockTwin = {
       id: 'twin-123',
@@ -205,7 +205,7 @@ describe('OnboardingWizard', () => {
     });
 
     // Fill step 1
-    await user.type(screen.getByLabelText(/Digital Twin Name/i), 'Coach John AI');
+    await user.type(screen.getByLabelText(/Knowledge Base Name/i), 'Coach John AI');
     await user.type(screen.getByLabelText(/Profession/i), 'Life Coach');
     await user.click(screen.getByRole('button', { name: /Next/i }));
 

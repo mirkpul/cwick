@@ -132,12 +132,12 @@ class TestRunnerService {
 
     // ==================== RUN MANAGEMENT ====================
 
-    async createRun(twinId: string, datasetId: string, options: RunOptions = {}): Promise<Run> {
+    async createRun(kbId: string, datasetId: string, options: RunOptions = {}): Promise<Run> {
         await this._loadDependencies();
 
         const { name, description, runType = 'full' } = options;
 
-        const ragConfig = await this.knowledgeBaseService!.getRAGConfig(twinId);
+        const ragConfig = await this.knowledgeBaseService!.getRAGConfig(kbId);
 
         const id = uuidv4();
         const result = await pool.query(
@@ -145,7 +145,7 @@ class TestRunnerService {
        (id, kb_id, dataset_id, name, description, run_type, rag_config, status)
        VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending')
        RETURNING *`,
-            [id, twinId, datasetId, name, description, runType, JSON.stringify(ragConfig)]
+            [id, kbId, datasetId, name, description, runType, JSON.stringify(ragConfig)]
         );
 
         return result.rows[0];
@@ -164,11 +164,11 @@ class TestRunnerService {
         return result.rows[0] || null;
     }
 
-    async listRuns(twinId: string, options: ListRunsOptions = {}): Promise<Run[]> {
+    async listRuns(kbId: string, options: ListRunsOptions = {}): Promise<Run[]> {
         const { status = null, limit = 20, offset = 0 } = options;
 
         const conditions = ['r.kb_id = $1'];
-        const values: unknown[] = [twinId];
+        const values: unknown[] = [kbId];
         let paramIndex = 2;
 
         if (status) {
@@ -609,10 +609,10 @@ class TestRunnerService {
         return result.rows[0];
     }
 
-    private async _getTwin(twinId: string): Promise<Twin> {
+    private async _getTwin(kbId: string): Promise<Twin> {
         const result = await pool.query(
             'SELECT * FROM knowledge_bases WHERE id = $1',
-            [twinId]
+            [kbId]
         );
         return result.rows[0];
     }

@@ -17,7 +17,7 @@ class RAGRetrievalService {
     return false; // Microservice no longer used
   }
 
-  async search(_query: string, _twinId: string, _userId: string, _limit: number): Promise<SearchResult[]> {
+  async search(_query: string, _kbId: string, _userId: string, _limit: number): Promise<SearchResult[]> {
     throw new Error('RAG retrieval service disabled - use chatService hybridSearch directly');
   }
 }

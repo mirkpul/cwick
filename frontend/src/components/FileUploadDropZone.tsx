@@ -7,7 +7,7 @@ interface ProgressEvent {
 }
 
 interface FileUploadDropZoneProps {
-  twinId: string;
+  kbId: string;
   onUploadSuccess: (formData: FormData, onProgress: (progressEvent: ProgressEvent) => void) => Promise<void>;
   onUploadError: (error: string) => void;
   acceptedFormats?: string[];
@@ -15,7 +15,7 @@ interface FileUploadDropZoneProps {
 }
 
 const FileUploadDropZone: React.FC<FileUploadDropZoneProps> = ({
-  twinId: _twinId,
+  kbId: _kbId,
   onUploadSuccess,
   onUploadError,
   acceptedFormats = ['.pdf', '.txt', '.md', '.csv', '.png', '.jpg', '.jpeg', '.webp', '.svg'],

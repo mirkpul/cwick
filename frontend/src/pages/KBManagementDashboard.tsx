@@ -16,7 +16,7 @@ import WebScrapingTab from '../components/web/WebScrapingTab';
 import ConversationsList from '../components/ConversationsList';
 import OverviewTab from '../components/OverviewTab';
 
-interface DigitalTwin {
+interface KnowledgeBase {
   id: string;
   name: string;
   profession?: string;
@@ -79,7 +79,7 @@ export default function KBManagementDashboard(): React.JSX.Element {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
-  const [twin, setTwin] = useState<DigitalTwin | null>(null);
+  const [kb, setKb] = useState<KnowledgeBase | null>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [knowledgeBase, setKnowledgeBase] = useState<KnowledgeEntry[]>([]);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFileType[]>([]);
@@ -111,14 +111,14 @@ export default function KBManagementDashboard(): React.JSX.Element {
         chatAPI.getMyConversations(),
       ]);
 
-      const twinData = twinRes.data.knowledgeBase || twinRes.data.twin;
-      setTwin(twinData);
+      const kbData = twinRes.data.knowledgeBase;
+      setKb(kbData);
       setConversations(convsRes.data.conversations);
 
-      if (twinData) {
+      if (kbData) {
         const [kbRes, filesRes, emailStatusRes] = await Promise.all([
-          knowledgeBaseAPI.getKnowledge(twinData.id),
-          knowledgeBaseAPI.listKnowledgeFiles(twinData.id),
+          knowledgeBaseAPI.getKnowledge(kbData.id),
+          knowledgeBaseAPI.listKnowledgeFiles(kbData.id),
           emailAPI.getSyncStatus().catch(() => ({ data: { connected: false } }))
         ]);
         setKnowledgeBase(kbRes.data.knowledge);
@@ -131,7 +131,7 @@ export default function KBManagementDashboard(): React.JSX.Element {
       const apiError = error as ApiError;
       if (apiError.response?.status === 404) {
         // No knowledge base created yet - that's ok, dashboard will show create prompt
-        setTwin(null);
+        setKb(null);
         setConversations([]);
       } else {
         toast.error('Failed to load dashboard data');
@@ -147,7 +147,7 @@ export default function KBManagementDashboard(): React.JSX.Element {
     }
 
     try {
-      await knowledgeBaseAPI.addKnowledge(twin!.id, {
+      await knowledgeBaseAPI.addKnowledge(kb!.id, {
         question: newKnowledge.title,
         answer: newKnowledge.content,
         category: 'manual_entry',
@@ -165,7 +165,7 @@ export default function KBManagementDashboard(): React.JSX.Element {
     if (!confirm('Are you sure you want to delete this entry?')) return;
 
     try {
-      await knowledgeBaseAPI.deleteKnowledge(twin!.id, entryId);
+      await knowledgeBaseAPI.deleteKnowledge(kb!.id, entryId);
       toast.success('Knowledge entry deleted');
       loadDashboardData();
     } catch {
@@ -174,7 +174,7 @@ export default function KBManagementDashboard(): React.JSX.Element {
   };
 
   const handleFileUploadSuccess = async (formData: FormData, onProgress: (progressEvent: { loaded: number; total: number }) => void): Promise<void> => {
-    await knowledgeBaseAPI.uploadKnowledgeFile(twin!.id, formData, (progressEvent) => {
+    await knowledgeBaseAPI.uploadKnowledgeFile(kb!.id, formData, (progressEvent) => {
       const total = progressEvent.total || 100;
       const percentCompleted = Math.round((progressEvent.loaded * 100) / total);
       onProgress({ loaded: percentCompleted, total: 100 });
@@ -182,7 +182,7 @@ export default function KBManagementDashboard(): React.JSX.Element {
     toast.success('File uploaded and processed successfully!');
 
     // Reload files list
-    const filesRes = await knowledgeBaseAPI.listKnowledgeFiles(twin!.id);
+    const filesRes = await knowledgeBaseAPI.listKnowledgeFiles(kb!.id);
     setUploadedFiles((filesRes.data.files || []) as UploadedFileType[]);
   };
 
@@ -191,7 +191,7 @@ export default function KBManagementDashboard(): React.JSX.Element {
   };
 
   const getChatUrl = (): string => {
-    return `${window.location.origin}/chat/${twin?.id}`;
+    return `${window.location.origin}/chat/${kb?.id}`;
   };
 
   const copyChatUrl = (): void => {
@@ -228,7 +228,7 @@ export default function KBManagementDashboard(): React.JSX.Element {
       </nav>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {!twin ? (
+        {!kb ? (
           /* No Knowledge Base - Show onboarding prompt */
           <div className="max-w-2xl mx-auto">
             <div className="bg-white rounded-lg shadow-lg p-8 text-center">
@@ -281,7 +281,7 @@ export default function KBManagementDashboard(): React.JSX.Element {
         {activeTab === 'overview' && (
           <OverviewTab
             userName={user?.full_name || 'User'}
-            kbName={twin?.name || 'Knowledge Base'}
+            kbName={kb?.name || 'Knowledge Base'}
             chatUrl={getChatUrl()}
             conversations={conversations}
             knowledgeBaseCount={knowledgeBase.length}
@@ -299,7 +299,7 @@ export default function KBManagementDashboard(): React.JSX.Element {
         {/* Semantic Search Tab */}
         {activeTab === 'search' && (
           <div>
-            <SemanticSearch twinId={twin!.id} />
+            <SemanticSearch kbId={kb!.id} />
           </div>
         )}
 
@@ -313,7 +313,7 @@ export default function KBManagementDashboard(): React.JSX.Element {
                 Upload PDF, TXT, Markdown, or CSV files. Files will be automatically chunked and converted to embeddings for semantic search.
               </p>
               <FileUploadDropZone
-                twinId={twin!.id}
+                kbId={kb!.id}
                 onUploadSuccess={handleFileUploadSuccess}
                 onUploadError={(error: string) => toast.error(error)}
               />
@@ -323,7 +323,7 @@ export default function KBManagementDashboard(): React.JSX.Element {
             <div className="bg-white rounded-lg shadow p-6">
               <h2 className="text-xl font-bold mb-4">Uploaded Files</h2>
               <KnowledgeBaseFileList
-                twinId={twin!.id}
+                kbId={kb!.id}
                 files={uploadedFiles}
                 onFileDeleted={handleFileDeleted}
               />
@@ -427,10 +427,10 @@ export default function KBManagementDashboard(): React.JSX.Element {
         )}
 
             {/* Settings Tab */}
-            {activeTab === 'settings' && twin && (
+            {activeTab === 'settings' && kb && (
               <div className="bg-white rounded-lg shadow p-6">
                 <h2 className="text-xl font-bold mb-6">Knowledge Base Settings</h2>
-                <KnowledgeBaseSettings twin={twin} onUpdate={loadDashboardData} />
+                <KnowledgeBaseSettings knowledgeBase={kb} onUpdate={loadDashboardData} />
               </div>
             )}
           </>

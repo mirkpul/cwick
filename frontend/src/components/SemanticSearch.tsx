@@ -15,7 +15,7 @@ interface SearchResult extends BaseSearchResult {
 }
 
 interface SemanticSearchProps {
-  twinId: string;
+  kbId: string;
 }
 
 interface ResultsBoxProps {
@@ -25,7 +25,7 @@ interface ResultsBoxProps {
   type: string;
 }
 
-const SemanticSearch: React.FC<SemanticSearchProps> = ({ twinId }) => {
+const SemanticSearch: React.FC<SemanticSearchProps> = ({ kbId }) => {
   const [query, setQuery] = useState<string>('');
   const [knowledgeResults, setKnowledgeResults] = useState<SearchResult[]>([]);
   const [emailResults, setEmailResults] = useState<SearchResult[]>([]);
@@ -45,7 +45,7 @@ const SemanticSearch: React.FC<SemanticSearchProps> = ({ twinId }) => {
     setHasSearched(true);
 
     try {
-      const response = await knowledgeBaseAPI.searchKnowledge(twinId, query.trim(), 10);
+      const response = await knowledgeBaseAPI.searchKnowledge(kbId, query.trim(), 10);
       setKnowledgeResults(response.data.knowledge || []);
       setEmailResults(response.data.emails || []);
 
@@ -169,7 +169,7 @@ const SemanticSearch: React.FC<SemanticSearchProps> = ({ twinId }) => {
   return (
     <div className="space-y-6">
       {/* RAG Configuration Panel */}
-      <RAGConfigPanel kbId={twinId} onConfigChange={setRagConfig} />
+      <RAGConfigPanel kbId={kbId} onConfigChange={setRagConfig} />
 
       {/* Search Form */}
       <div className="bg-white rounded-lg border border-gray-200 p-6">

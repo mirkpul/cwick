@@ -34,27 +34,27 @@ export interface CreateWebSourceRequest {
 export type WebSourceInput = CreateWebSourceRequest;
 
 class WebScrapingService {
-  async listSources(_twinId: string): Promise<WebSource[]> {
+  async listSources(_kbId: string): Promise<WebSource[]> {
     throw new Error('Web scraping service disabled - functionality integrated in backend');
   }
 
-  async listRuns(_twinId: string, _sourceId: string, _limit: number): Promise<WebScrapeRun[]> {
+  async listRuns(_kbId: string, _sourceId: string, _limit: number): Promise<WebScrapeRun[]> {
     throw new Error('Web scraping service disabled - functionality integrated in backend');
   }
 
-  async createSource(_twinId: string, _input: WebSourceInput): Promise<WebSource> {
+  async createSource(_kbId: string, _input: WebSourceInput): Promise<WebSource> {
     throw new Error('Web scraping service disabled - functionality integrated in backend');
   }
 
-  async updateSource(_twinId: string, _sourceId: string, _input: Partial<WebSourceInput>): Promise<WebSource> {
+  async updateSource(_kbId: string, _sourceId: string, _input: Partial<WebSourceInput>): Promise<WebSource> {
     throw new Error('Web scraping service disabled - functionality integrated in backend');
   }
 
-  async deleteSource(_twinId: string, _sourceId: string): Promise<void> {
+  async deleteSource(_kbId: string, _sourceId: string): Promise<void> {
     throw new Error('Web scraping service disabled - functionality integrated in backend');
   }
 
-  async triggerScrape(_twinId: string, _llmProvider: string | null, _sourceId: string, _trigger: 'manual' | 'auto'): Promise<{ runId: string }> {
+  async triggerScrape(_kbId: string, _llmProvider: string | null, _sourceId: string, _trigger: 'manual' | 'auto'): Promise<{ runId: string }> {
     throw new Error('Web scraping service disabled - functionality integrated in backend');
   }
 

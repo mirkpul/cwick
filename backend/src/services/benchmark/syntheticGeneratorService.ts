@@ -65,7 +65,7 @@ class SyntheticGeneratorService {
 
     // ==================== MAIN GENERATION METHODS ====================
 
-    async generateFromKnowledgeBase(twinId: string, options: GenerationOptions = {}): Promise<GeneratedQA[]> {
+    async generateFromKnowledgeBase(kbId: string, options: GenerationOptions = {}): Promise<GeneratedQA[]> {
         await this._loadDependencies();
 
         const {
@@ -75,7 +75,7 @@ class SyntheticGeneratorService {
             onProgress = null
         } = options;
 
-        const kbEntries = await this._getKnowledgeBaseEntries(twinId);
+        const kbEntries = await this._getKnowledgeBaseEntries(kbId);
 
         if (kbEntries.length === 0) {
             throw new Error('No knowledge base entries found for this twin');
@@ -277,7 +277,7 @@ Respond in this exact JSON format:
 
     // ==================== HELPER METHODS ====================
 
-    private async _getKnowledgeBaseEntries(twinId: string, limit = 100): Promise<KBEntry[]> {
+    private async _getKnowledgeBaseEntries(kbId: string, limit = 100): Promise<KBEntry[]> {
         const result = await pool.query(
             `SELECT id, title, content, content_type
        FROM knowledge_base
@@ -286,7 +286,7 @@ Respond in this exact JSON format:
          AND LENGTH(content) > 100
        ORDER BY created_at DESC
        LIMIT $2`,
-            [twinId, limit]
+            [kbId, limit]
         );
         return result.rows;
     }
@@ -319,7 +319,7 @@ Respond in this exact JSON format:
 
     // ==================== BATCH GENERATION ====================
 
-    async generateBenchmarkDataset(twinId: string, options: DatasetOptions = {}): Promise<Record<string, unknown>> {
+    async generateBenchmarkDataset(kbId: string, options: DatasetOptions = {}): Promise<Record<string, unknown>> {
         const {
             name = `Synthetic Dataset ${new Date().toISOString().slice(0, 10)}`,
             description = 'Auto-generated benchmark dataset',
@@ -347,7 +347,7 @@ Respond in this exact JSON format:
         types.sort(() => Math.random() - 0.5);
         difficulties.sort(() => Math.random() - 0.5);
 
-        const questions = await this.generateFromKnowledgeBase(twinId, {
+        const questions = await this.generateFromKnowledgeBase(kbId, {
             count: totalQuestions,
             types: [...new Set(types)],
             difficulties: [...new Set(difficulties)]
