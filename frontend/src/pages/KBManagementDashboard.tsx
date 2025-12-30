@@ -111,7 +111,7 @@ export default function KBManagementDashboard(): React.JSX.Element {
         chatAPI.getMyConversations(),
       ]);
 
-      const twinData = twinRes.data.twin;
+      const twinData = twinRes.data.knowledgeBase || twinRes.data.twin;
       setTwin(twinData);
       setConversations(convsRes.data.conversations);
 
@@ -130,8 +130,9 @@ export default function KBManagementDashboard(): React.JSX.Element {
     } catch (error) {
       const apiError = error as ApiError;
       if (apiError.response?.status === 404) {
-        // No twin created yet
-        navigate('/onboarding');
+        // No knowledge base created yet - that's ok, dashboard will show create prompt
+        setTwin(null);
+        setConversations([]);
       } else {
         toast.error('Failed to load dashboard data');
       }
@@ -227,30 +228,54 @@ export default function KBManagementDashboard(): React.JSX.Element {
       </nav>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Tabs */}
-        <div className="mb-6 border-b border-gray-200">
-          <nav className="flex space-x-8">
-            {(['overview', 'conversations', 'search', 'knowledge', 'email', 'settings'] as TabType[]).map((tab) => (
+        {!twin ? (
+          /* No Knowledge Base - Show onboarding prompt */
+          <div className="max-w-2xl mx-auto">
+            <div className="bg-white rounded-lg shadow-lg p-8 text-center">
+              <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">Welcome to your Dashboard!</h2>
+              <p className="text-gray-600 mb-6">
+                You haven't created a knowledge base yet. Create one to get started with AI-powered Q&A,
+                document management, and intelligent conversations.
+              </p>
               <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`py-4 px-1 border-b-2 font-medium text-sm capitalize ${
-                  activeTab === tab
-                    ? 'border-primary-600 text-primary-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
+                onClick={() => navigate('/onboarding')}
+                className="bg-primary-600 text-white px-6 py-3 rounded-lg hover:bg-primary-700 font-medium text-lg transition-colors"
               >
-                {TAB_LABELS[tab]}
+                Create Your First Knowledge Base
               </button>
-            ))}
-            <button
-              onClick={() => navigate('/benchmark')}
-              className="py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-            >
-              RAG Benchmark
-            </button>
-          </nav>
-        </div>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Tabs */}
+            <div className="mb-6 border-b border-gray-200">
+              <nav className="flex space-x-8">
+                {(['overview', 'conversations', 'search', 'knowledge', 'email', 'settings'] as TabType[]).map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`py-4 px-1 border-b-2 font-medium text-sm capitalize ${
+                      activeTab === tab
+                        ? 'border-primary-600 text-primary-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    {TAB_LABELS[tab]}
+                  </button>
+                ))}
+                <button
+                  onClick={() => navigate('/benchmark')}
+                  className="py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                >
+                  RAG Benchmark
+                </button>
+              </nav>
+            </div>
 
         {/* Overview Tab */}
         {activeTab === 'overview' && (
@@ -401,12 +426,14 @@ export default function KBManagementDashboard(): React.JSX.Element {
           </div>
         )}
 
-        {/* Settings Tab */}
-        {activeTab === 'settings' && twin && (
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-bold mb-6">Knowledge Base Settings</h2>
-            <KnowledgeBaseSettings twin={twin} onUpdate={loadDashboardData} />
-          </div>
+            {/* Settings Tab */}
+            {activeTab === 'settings' && twin && (
+              <div className="bg-white rounded-lg shadow p-6">
+                <h2 className="text-xl font-bold mb-6">Knowledge Base Settings</h2>
+                <KnowledgeBaseSettings twin={twin} onUpdate={loadDashboardData} />
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
