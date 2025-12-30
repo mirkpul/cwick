@@ -130,8 +130,10 @@ services:
       dockerfile: Dockerfile
     container_name: digitaltwin-frontend
     environment:
-      VITE_API_URL: http://localhost:3001
-      VITE_WS_URL: ws://localhost:3001
+      # When using Nginx proxy (recommended), use relative URLs
+      # When developing frontend directly, use http://localhost:3001
+      VITE_API_URL: ${VITE_API_URL:-http://localhost}
+      VITE_WS_URL: ${VITE_WS_URL:-ws://localhost}
     ports:
       - "3000:3000"
     volumes:
