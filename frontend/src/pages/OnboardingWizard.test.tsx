@@ -38,7 +38,7 @@ describe('OnboardingWizard', () => {
     vi.clearAllMocks();
     mockNavigate.mockClear();
 
-    // Mock getMyTwin to return 404 (no existing twin)
+    // Mock getMyKB to return 404 (no existing knowledge base)
     (knowledgeBaseAPI.getMyKB as Mock).mockRejectedValue({
       response: { status: 404 }
     });
@@ -53,7 +53,7 @@ describe('OnboardingWizard', () => {
       </BrowserRouter>
     );
 
-    // Wait for the existing twin check to complete
+    // Wait for the existing knowledge base check to complete
     await waitFor(() => {
       expect(screen.getByText('Basic Information')).toBeInTheDocument();
     });
@@ -75,7 +75,7 @@ describe('OnboardingWizard', () => {
       </BrowserRouter>
     );
 
-    // Wait for the existing twin check to complete
+    // Wait for the existing knowledge base check to complete
     await waitFor(() => {
       expect(screen.getByText('Basic Information')).toBeInTheDocument();
     });
@@ -101,7 +101,7 @@ describe('OnboardingWizard', () => {
       </BrowserRouter>
     );
 
-    // Wait for the existing twin check to complete
+    // Wait for the existing knowledge base check to complete
     await waitFor(() => {
       expect(screen.getByText('Basic Information')).toBeInTheDocument();
     });
@@ -129,7 +129,7 @@ describe('OnboardingWizard', () => {
       </BrowserRouter>
     );
 
-    // Wait for the existing twin check to complete
+    // Wait for the existing knowledge base check to complete
     await waitFor(() => {
       expect(screen.getByText('Basic Information')).toBeInTheDocument();
     });
@@ -150,7 +150,7 @@ describe('OnboardingWizard', () => {
       </BrowserRouter>
     );
 
-    // Wait for the existing twin check to complete
+    // Wait for the existing knowledge base check to complete
     await waitFor(() => {
       expect(screen.getByText('Basic Information')).toBeInTheDocument();
     });
@@ -181,14 +181,14 @@ describe('OnboardingWizard', () => {
 
   it('creates knowledge base successfully', async () => {
     const user = userEvent.setup();
-    const mockTwin = {
-      id: 'twin-123',
+    const mockKB = {
+      id: 'kb-123',
       name: 'Coach John AI',
       profession: 'Life Coach',
     };
 
     (knowledgeBaseAPI.create as Mock).mockResolvedValue({
-      data: { twin: mockTwin },
+      data: { knowledgeBase: mockKB },
     });
 
     render(
@@ -199,7 +199,7 @@ describe('OnboardingWizard', () => {
       </BrowserRouter>
     );
 
-    // Wait for the existing twin check to complete
+    // Wait for the existing knowledge base check to complete
     await waitFor(() => {
       expect(screen.getByText('Basic Information')).toBeInTheDocument();
     });

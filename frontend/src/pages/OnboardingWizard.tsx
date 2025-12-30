@@ -25,7 +25,7 @@ export default function OnboardingWizard(): React.JSX.Element {
     const checkExistingKB = async (): Promise<void> => {
       try {
         const response = await knowledgeBaseAPI.getMyKB();
-        if (response.data.knowledgeBase || response.data.twin) {
+        if (response.data.knowledgeBase) {
           toast.success('You already have a knowledge base. Redirecting to dashboard...');
           navigate('/dashboard');
         }
