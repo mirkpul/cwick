@@ -39,7 +39,7 @@ class AuthService {
   }
 
   @logErrors('AuthService.register')
-  async register(email: string, password: string, fullName: string, role: string = 'professional') {
+  async register(email: string, password: string, fullName: string, role: string = 'kb_owner') {
     // Check if user already exists
     const existingUser = await db.query(
       'SELECT id FROM users WHERE email = $1',
@@ -63,8 +63,8 @@ class AuthService {
 
     const user = result.rows[0] as unknown as User;
 
-    // Create free subscription for new professionals
-    if (role === 'professional') {
+    // Create free subscription for new kb_owners
+    if (role === 'kb_owner') {
       await db.query(
         `INSERT INTO subscriptions (user_id, tier, monthly_message_limit, current_period_start, current_period_end)
          VALUES ($1, 'free', 100, NOW(), NOW() + INTERVAL '30 days')`,
