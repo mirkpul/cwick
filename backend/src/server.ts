@@ -28,8 +28,30 @@ app.set('trust proxy', 1);
 
 // Middleware
 app.use(helmet());
+
+// CORS configuration - allow multiple origins
+const allowedOrigins = [
+  'http://localhost:3000',      // Direct frontend access
+  'http://localhost',           // Nginx proxy
+  'http://localhost:80',        // Explicit port 80
+  process.env.CORS_ORIGIN,      // Custom origin from env
+  process.env.FRONTEND_URL,     // Frontend URL from env
+].filter(Boolean) as string[];  // Remove undefined values
+
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps, curl, Postman)
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      logger.warn(`CORS blocked origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));
