@@ -70,12 +70,18 @@ async function createTestUser() {
 
   } catch (error) {
     logger.error('❌ Failed to create test user:', error);
-    throw error;
-  } finally {
-    // Close database connection
-    await db.pool.end();
-    process.exit(0);
+    process.exit(1);
   }
+
+  // Close database connection and exit
+  try {
+    await db.pool.end();
+    logger.info('Database connection closed');
+  } catch (error) {
+    logger.error('Error closing database:', error);
+  }
+
+  process.exit(0);
 }
 
 // Run the script
