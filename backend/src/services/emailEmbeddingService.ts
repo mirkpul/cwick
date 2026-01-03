@@ -56,14 +56,6 @@ class EmailEmbeddingService {
         [JSON.stringify(embedding), provider === 'openai' ? 'text-embedding-3-small' : 'unknown', emailId]
       );
 
-      // Push to vector service if enabled
-      await vectorStoreService.upsertEmbedding({
-        id: emailId,
-        vector: embedding,
-        metadata: { source: 'email', provider },
-        namespace: 'email',
-      });
-
       logger.debug('Email embedding generated and stored', {
         emailId,
         embeddingDimensions: embedding.length,

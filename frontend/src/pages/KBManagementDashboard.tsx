@@ -106,12 +106,12 @@ export default function KBManagementDashboard(): React.JSX.Element {
 
   const loadDashboardData = async (): Promise<void> => {
     try {
-      const [twinRes, convsRes] = await Promise.all([
+      const [kbRes, convsRes] = await Promise.all([
         knowledgeBaseAPI.getMyKB(),
         chatAPI.getMyConversations(),
       ]);
 
-      const kbData = twinRes.data.knowledgeBase;
+      const kbData = kbRes.data.knowledgeBase;
       setKb(kbData);
       setConversations(convsRes.data.conversations);
 

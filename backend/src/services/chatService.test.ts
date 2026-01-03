@@ -329,7 +329,7 @@ describe('ChatService', () => {
         });
     });
 
-    describe('generateTwinResponse', () => {
+    describe('generateKnowledgeBaseResponse', () => {
         it('should generate response for first message', async () => {
             const conversationId = 'conv123';
             const userMessage = 'Hello!';
@@ -378,7 +378,7 @@ describe('ChatService', () => {
             // Mock analytics tracking
             mockDb.query.mockResolvedValueOnce({ rows: [] } as never);
 
-            const result = await chatService.generateTwinResponse(conversationId, userMessage);
+            const result = await chatService.generateKnowledgeBaseResponse(conversationId, userMessage);
 
             expect(result.message).toBeDefined();
             expect(mockLlmService.generateResponse).toHaveBeenCalledWith(
@@ -397,12 +397,12 @@ describe('ChatService', () => {
             mockDb.query.mockResolvedValueOnce({ rows: [] } as never);
 
             await expect(
-                chatService.generateTwinResponse(conversationId, 'Hello')
+                chatService.generateKnowledgeBaseResponse(conversationId, 'Hello')
             ).rejects.toThrow('Conversation not found');
         });
     });
 
-    describe('generateTwinResponseStreaming', () => {
+    describe('generateKnowledgeBaseResponseStreaming', () => {
         it('should generate streaming response', async () => {
             const conversationId = 'conv123';
             const userMessage = 'Hello!';
@@ -448,7 +448,7 @@ describe('ChatService', () => {
             // Mock analytics
             mockDb.query.mockResolvedValueOnce({ rows: [] } as never);
 
-            const result = await chatService.generateTwinResponseStreaming(
+            const result = await chatService.generateKnowledgeBaseResponseStreaming(
                 conversationId,
                 userMessage,
                 onChunk
@@ -464,7 +464,7 @@ describe('ChatService', () => {
             mockDb.query.mockResolvedValueOnce({ rows: [] } as never);
 
             await expect(
-                chatService.generateTwinResponseStreaming(conversationId, 'Hello', jest.fn())
+                chatService.generateKnowledgeBaseResponseStreaming(conversationId, 'Hello', jest.fn())
             ).rejects.toThrow('Conversation not found');
         });
     });
@@ -510,7 +510,7 @@ describe('ChatService', () => {
             ).rejects.toThrow('Database error');
         });
 
-        it('should handle generateTwinResponse error', async () => {
+        it('should handle generateKnowledgeBaseResponse error', async () => {
             mockDb.query.mockRejectedValueOnce(new Error('Database error'));
 
             await expect(

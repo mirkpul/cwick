@@ -252,8 +252,8 @@ describe('ContextService', () => {
     });
 
     describe('generateContextPreview', () => {
-        it('should generate preview with all twin properties', () => {
-            const twin = {
+        it('should generate preview with all knowledge base properties', () => {
+            const kb = {
                 name: 'Dr. Smith',
                 profession: 'Medical Doctor',
                 bio: 'Experienced physician',
@@ -263,7 +263,7 @@ describe('ContextService', () => {
                 system_prompt: 'Be careful with medical advice',
             };
 
-            const result = contextService.generateContextPreview(twin, []);
+            const result = contextService.generateContextPreview(kb, []);
 
             expect(result.identity).toContain('Dr. Smith');
             expect(result.identity).toContain('Medical Doctor');
@@ -276,10 +276,10 @@ describe('ContextService', () => {
             expect(result.fullPrompt).toContain('Additional Instructions');
         });
 
-        it('should use defaults for missing twin properties', () => {
-            const twin = {};
+        it('should use defaults for missing knowledge base properties', () => {
+            const kb = {};
 
-            const result = contextService.generateContextPreview(twin, []);
+            const result = contextService.generateContextPreview(kb, []);
 
             expect(result.identity).toContain('digital assistant');
             expect(result.identity).toContain('professional');
@@ -288,7 +288,7 @@ describe('ContextService', () => {
         });
 
         it('should format knowledge base entries', () => {
-            const twin = { name: 'Assistant' };
+            const kb = { name: 'Assistant' };
             const knowledge = [
                 { id: '1', content: 'Fact 1', title: 'Topic 1' },
                 { id: '2', content: 'Fact 2', title: 'Topic 2' },
@@ -306,7 +306,7 @@ describe('ContextService', () => {
         });
 
         it('should handle null knowledge base', () => {
-            const twin = { name: 'Assistant' };
+            const kb = { name: 'Assistant' };
 
             const result = contextService.generateContextPreview(twin, null as never);
 
@@ -373,10 +373,10 @@ describe('ContextService', () => {
 
     describe('generateContinuationPrompt', () => {
         it('should generate prompt with semantic results', () => {
-            const twin = { name: 'Assistant', profession: 'Helper' };
+            const kb = { name: 'Assistant', profession: 'Helper' };
             const results = [{ content: 'Context data', similarity: 0.9 }];
 
-            const prompt = contextService.generateContinuationPrompt(twin, results);
+            const prompt = contextService.generateContinuationPrompt(kb, results);
 
             expect(prompt).toContain('RELEVANT CONTEXT');
             expect(prompt).toContain('Context data');
@@ -385,16 +385,16 @@ describe('ContextService', () => {
         });
 
         it('should generate prompt without semantic results', () => {
-            const twin = { name: 'Assistant', profession: 'Helper' };
+            const kb = { name: 'Assistant', profession: 'Helper' };
 
-            const prompt = contextService.generateContinuationPrompt(twin, null);
+            const prompt = contextService.generateContinuationPrompt(kb, null);
 
             expect(prompt).toContain('NO CONTEXT AVAILABLE');
             expect(prompt).toContain('Assistant');
         });
 
         it('should handle empty semantic results', () => {
-            const twin = { name: 'Bot' };
+            const kb = { name: 'Bot' };
 
             const prompt = contextService.generateContinuationPrompt(twin, []);
 
@@ -403,14 +403,14 @@ describe('ContextService', () => {
     });
 
     describe('generateEnhancedSystemPrompt', () => {
-        it('should throw error if twin is missing', () => {
+        it('should throw error if knowledge base is missing', () => {
             expect(() => {
                 contextService.generateEnhancedSystemPrompt(null as never, null, null);
-            }).toThrow('Twin is required');
+            }).toThrow('Knowledge Base is required');
         });
 
         it('should generate complete prompt with all sections', () => {
-            const twin = {
+            const kb = {
                 name: 'Dr. Expert',
                 profession: 'Consultant',
                 bio: 'Expert in the field',
@@ -420,9 +420,9 @@ describe('ContextService', () => {
                 { id: '1', content: 'Knowledge item', title: 'Topic' },
             ];
 
-            const prompt = contextService.generateEnhancedSystemPrompt(twin, knowledge, null);
+            const prompt = contextService.generateEnhancedSystemPrompt(kb, knowledge, null);
 
-            expect(prompt).toContain('# Digital Twin Identity');
+            expect(prompt).toContain('# Knowledge Base Identity');
             expect(prompt).toContain('Dr. Expert');
             expect(prompt).toContain('# Professional Expertise');
             expect(prompt).toContain('Expert in the field');
@@ -434,12 +434,12 @@ describe('ContextService', () => {
         });
 
         it('should prioritize semantic results over knowledge base', () => {
-            const twin = { name: 'Assistant' };
+            const kb = { name: 'Assistant' };
             const knowledge = [{ content: 'Static knowledge', title: 'KB Entry' }];
             const semanticResults = [{ content: 'Dynamic context', similarity: 0.9 }];
 
             const prompt = contextService.generateEnhancedSystemPrompt(
-                twin,
+                kb,
                 knowledge,
                 semanticResults
             );
@@ -450,26 +450,26 @@ describe('ContextService', () => {
         });
 
         it('should use knowledge base when no semantic results', () => {
-            const twin = { name: 'Assistant' };
+            const kb = { name: 'Assistant' };
             const knowledge = [{ content: 'KB content', title: 'KB Entry' }];
 
-            const prompt = contextService.generateEnhancedSystemPrompt(twin, knowledge, null);
+            const prompt = contextService.generateEnhancedSystemPrompt(kb, knowledge, null);
 
             expect(prompt).toContain('# Knowledge Base');
             expect(prompt).toContain('KB content');
         });
 
         it('should handle empty knowledge base', () => {
-            const twin = { name: 'Assistant' };
+            const kb = { name: 'Assistant' };
 
             const prompt = contextService.generateEnhancedSystemPrompt(twin, [], null);
 
             expect(prompt).not.toContain('# Knowledge Base');
-            expect(prompt).toContain('# Digital Twin Identity');
+            expect(prompt).toContain('# Knowledge Base Identity');
         });
 
-        it('should use defaults for missing twin properties', () => {
-            const twin = {};
+        it('should use defaults for missing knowledge base properties', () => {
+            const kb = {};
 
             const prompt = contextService.generateEnhancedSystemPrompt(twin, null, null);
 
@@ -480,14 +480,14 @@ describe('ContextService', () => {
     });
 
     describe('generateSystemPrompt', () => {
-        it('should throw error if twin is missing', () => {
+        it('should throw error if knowledge base is missing', () => {
             expect(() => {
                 contextService.generateSystemPrompt(null as never, []);
-            }).toThrow('Twin is required');
+            }).toThrow('Knowledge Base is required');
         });
 
         it('should delegate to generateEnhancedSystemPrompt', () => {
-            const twin = { name: 'Assistant', profession: 'Helper' };
+            const kb = { name: 'Assistant', profession: 'Helper' };
             const knowledge = [{ content: 'Data', title: 'Entry' }];
 
             const result = contextService.generateSystemPrompt(twin, knowledge);

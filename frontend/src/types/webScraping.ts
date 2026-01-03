@@ -7,7 +7,7 @@ export interface WebSourceConfig {
 
 export interface WebSource {
   id: string;
-  twinId: string;
+  kbId: string;
   name: string;
   baseUrl: string;
   scrapeStrategy: WebScrapeStrategy;

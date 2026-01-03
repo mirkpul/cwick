@@ -166,8 +166,8 @@ class WebSocketService {
         },
       });
 
-      // Generate twin response with streaming
-      const twinResponse = await chatService.generateTwinResponseStreaming(
+      // Generate knowledge base response with streaming
+      const kbResponse = await chatService.generateKnowledgeBaseResponseStreaming(
         conversationId,
         userMessage.content,
         async (chunk: string) => {
@@ -187,7 +187,7 @@ class WebSocketService {
         type: 'streaming_end',
         payload: {
           messageId: streamingMessageId,
-          message: twinResponse.message,
+          message: kbResponse.message,
         },
       });
     } catch (error) {

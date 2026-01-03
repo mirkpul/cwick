@@ -123,7 +123,7 @@ describe('ChatController', () => {
                 sender: 'user',
                 content: 'Hello',
             };
-            const mockTwinResponse = {
+            const mockKBResponse = {
                 message: {
                     id: 'msg124',
                     conversation_id: 'conv123',
@@ -133,7 +133,7 @@ describe('ChatController', () => {
             };
 
             (chatService.sendMessage as jest.Mock).mockResolvedValue(mockUserMessage);
-            (chatService.generateTwinResponse as jest.Mock).mockResolvedValue(mockTwinResponse);
+            (chatService.generateKnowledgeBaseResponse as jest.Mock).mockResolvedValue(mockKBResponse);
 
             const req = createMockRequest({
                 params: { conversationId: 'conv123' },
@@ -144,10 +144,10 @@ describe('ChatController', () => {
             await chatController.sendMessage(req, res, next);
 
             expect(chatService.sendMessage).toHaveBeenCalledWith('conv123', 'user', 'Hello');
-            expect(chatService.generateTwinResponse).toHaveBeenCalledWith('conv123', 'Hello');
+            expect(chatService.generateKnowledgeBaseResponse).toHaveBeenCalledWith('conv123', 'Hello');
             expect(res.json).toHaveBeenCalledWith({
                 userMessage: mockUserMessage,
-                twinResponse: mockTwinResponse.message,
+                assistantResponse: mockKBResponse.message,
             });
         });
 
@@ -155,7 +155,7 @@ describe('ChatController', () => {
             (chatIntegrationService.isEnabled as jest.Mock).mockReturnValue(true);
             const mockResult = {
                 userMessage: { id: 'msg123' },
-                twinResponse: { id: 'msg124' },
+                assistantResponse: { id: 'msg124' },
             };
 
             (chatIntegrationService.sendMessage as jest.Mock).mockResolvedValue(mockResult);
