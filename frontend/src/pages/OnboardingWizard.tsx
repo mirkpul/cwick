@@ -33,7 +33,7 @@ export default function OnboardingWizard(): React.JSX.Element {
         const apiError = error as ApiError;
         // If 404, user doesn't have a KB yet, proceed with onboarding
         if (apiError.response?.status !== 404) {
-          console.error('Error checking for existing KB:', error);
+          // Error checking for existing KB
         }
       } finally {
         setChecking(false);
@@ -94,7 +94,7 @@ export default function OnboardingWizard(): React.JSX.Element {
             Welcome! 🎉
           </h1>
           <p className="text-xl text-gray-600">
-            Let's create your first AI-powered knowledge base
+            Let&apos;s create your first AI-powered knowledge base
           </p>
         </div>
 
@@ -206,7 +206,7 @@ export default function OnboardingWizard(): React.JSX.Element {
           </form>
 
           <p className="mt-6 text-center text-sm text-gray-500">
-            Don't worry, you can always change these settings later from your dashboard
+            Don&apos;t worry, you can always change these settings later from your dashboard
           </p>
         </div>
       </div>
