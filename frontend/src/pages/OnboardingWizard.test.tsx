@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
 import { vi, describe, it, expect, beforeEach, Mock } from 'vitest';
@@ -15,13 +15,20 @@ vi.mock('../services/api', () => ({
 }));
 
 // Mock react-hot-toast
-vi.mock('react-hot-toast', () => ({
-  default: {
-    success: vi.fn(),
-    error: vi.fn(),
+vi.mock('react-hot-toast', () => {
+  const mockError = vi.fn();
+  const mockSuccess = vi.fn();
+  return {
+    default: {
+      error: mockError,
+      success: mockSuccess,
+      info: vi.fn(),
+    },
+    error: mockError,
+    success: mockSuccess,
     info: vi.fn(),
-  },
-}));
+  };
+});
 
 // Mock useNavigate
 const mockNavigate = vi.fn();
@@ -44,185 +51,122 @@ describe('OnboardingWizard', () => {
     });
   });
 
-  it('renders step 1 with required fields', async () => {
-    render(
+  const renderOnboardingWizard = () => {
+    return render(
       <BrowserRouter>
         <AuthProvider>
           <OnboardingWizard />
         </AuthProvider>
       </BrowserRouter>
     );
+  };
 
-    // Wait for the existing knowledge base check to complete
+  it('renders correctly with required fields', async () => {
+    renderOnboardingWizard();
+
     await waitFor(() => {
-      expect(screen.getByText('Basic Information')).toBeInTheDocument();
+      expect(screen.getByText(/Welcome!/i)).toBeInTheDocument();
     });
 
     expect(screen.getByLabelText(/Knowledge Base Name/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Profession/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Bio \/ About You/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/AI Provider/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Model/i)).toBeInTheDocument();
   });
 
-  it('validates required fields on step 1', async () => {
+  it('redirects if user already has a knowledge base', async () => {
+    (knowledgeBaseAPI.getMyKB as Mock).mockResolvedValue({
+      data: { knowledgeBase: { id: 'kb-1' } }
+    });
+
+    renderOnboardingWizard();
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith('/dashboard');
+    });
+  });
+
+  it('validates that knowledge base name is required', async () => {
     const user = userEvent.setup();
+    const { container } = renderOnboardingWizard();
+
+    await waitFor(() => {
+      expect(screen.getByText(/Welcome!/i)).toBeInTheDocument();
+    });
+
+    // Clear default name
+    const nameInput = screen.getByLabelText(/Knowledge Base Name/i);
+    await user.clear(nameInput);
+
+    // Submit form
+    const form = container.querySelector('form');
+    fireEvent.submit(form!);
+
     const toast = await import('react-hot-toast');
-
-    render(
-      <BrowserRouter>
-        <AuthProvider>
-          <OnboardingWizard />
-        </AuthProvider>
-      </BrowserRouter>
-    );
-
-    // Wait for the existing knowledge base check to complete
     await waitFor(() => {
-      expect(screen.getByText('Basic Information')).toBeInTheDocument();
-    });
-
-    // Try to go to next step without filling required fields
-    const nextButton = screen.getByRole('button', { name: /Next/i });
-    await user.click(nextButton);
-
-    // Should show error for name
-    await waitFor(() => {
-      expect(toast.default.error).toHaveBeenCalledWith('Knowledge Base Name is required');
-    }, { timeout: 10000 });
-  });
-
-  it('allows navigation when required fields are filled', async () => {
-    const user = userEvent.setup();
-
-    render(
-      <BrowserRouter>
-        <AuthProvider>
-          <OnboardingWizard />
-        </AuthProvider>
-      </BrowserRouter>
-    );
-
-    // Wait for the existing knowledge base check to complete
-    await waitFor(() => {
-      expect(screen.getByText('Basic Information')).toBeInTheDocument();
-    });
-
-    // Fill required fields
-    await user.type(screen.getByLabelText(/Knowledge Base Name/i), 'Coach John AI');
-    await user.type(screen.getByLabelText(/Profession/i), 'Life Coach');
-
-    // Click next
-    const nextButton = screen.getByRole('button', { name: /Next/i });
-    await user.click(nextButton);
-
-    // Should navigate to step 2
-    await waitFor(() => {
-      expect(screen.getByText('AI Configuration')).toBeInTheDocument();
+      expect(toast.error).toHaveBeenCalledWith('Please enter a name for your knowledge base');
     });
   });
 
-  it('has 4 steps in total', async () => {
-    render(
-      <BrowserRouter>
-        <AuthProvider>
-          <OnboardingWizard />
-        </AuthProvider>
-      </BrowserRouter>
-    );
+  it('updates models when AI provider changes', async () => {
+    renderOnboardingWizard();
 
-    // Wait for the existing knowledge base check to complete
     await waitFor(() => {
-      expect(screen.getByText('Basic Information')).toBeInTheDocument();
+      expect(screen.getByText(/Welcome!/i)).toBeInTheDocument();
     });
 
-    // Check progress bar has 4 steps
-    const steps = screen.getAllByText(/^[1-4]$/);
-    expect(steps).toHaveLength(4);
-  });
+    const providerSelect = screen.getByLabelText(/AI Provider/i);
+    const modelSelect = screen.getByLabelText(/Model/i);
 
-  it('shows capabilities on step 4', async () => {
-    const user = userEvent.setup();
+    // Default is OpenAI -> GPT-4
+    expect(modelSelect).toHaveValue('gpt-4');
 
-    render(
-      <BrowserRouter>
-        <AuthProvider>
-          <OnboardingWizard />
-        </AuthProvider>
-      </BrowserRouter>
-    );
+    // Change to Anthropic
+    fireEvent.change(providerSelect, { target: { value: 'anthropic' } });
+    expect(modelSelect).toHaveValue('claude-3-5-sonnet-20241022');
 
-    // Wait for the existing knowledge base check to complete
-    await waitFor(() => {
-      expect(screen.getByText('Basic Information')).toBeInTheDocument();
-    });
-
-    // Fill step 1
-    await user.type(screen.getByLabelText(/Knowledge Base Name/i), 'Coach John AI');
-    await user.type(screen.getByLabelText(/Profession/i), 'Life Coach');
-    await user.click(screen.getByRole('button', { name: /Next/i }));
-
-    // Skip step 2
-    await waitFor(() => {
-      expect(screen.getByText('AI Configuration')).toBeInTheDocument();
-    });
-    await user.click(screen.getByRole('button', { name: /Next/i }));
-
-    // Skip step 3
-    await waitFor(() => {
-      expect(screen.getByText('Personality Traits')).toBeInTheDocument();
-    });
-    await user.click(screen.getByRole('button', { name: /Next/i }));
-
-    // Should show capabilities on step 4
-    await waitFor(() => {
-      expect(screen.getByText('Capabilities')).toBeInTheDocument();
-      expect(screen.getByText(/What should your knowledge base be able to do/i)).toBeInTheDocument();
-    });
+    // Change to Gemini
+    fireEvent.change(providerSelect, { target: { value: 'gemini' } });
+    expect(modelSelect).toHaveValue('gemini-pro');
   });
 
   it('creates knowledge base successfully', async () => {
     const user = userEvent.setup();
-    const mockKB = {
-      id: 'kb-123',
-      name: 'Coach John AI',
-      profession: 'Life Coach',
-    };
-
     (knowledgeBaseAPI.create as Mock).mockResolvedValue({
-      data: { knowledgeBase: mockKB },
+      data: { knowledgeBase: { id: 'new-kb' } }
     });
 
-    render(
-      <BrowserRouter>
-        <AuthProvider>
-          <OnboardingWizard />
-        </AuthProvider>
-      </BrowserRouter>
-    );
+    renderOnboardingWizard();
 
-    // Wait for the existing knowledge base check to complete
     await waitFor(() => {
-      expect(screen.getByText('Basic Information')).toBeInTheDocument();
+      expect(screen.getByText(/Welcome!/i)).toBeInTheDocument();
     });
 
-    // Fill step 1
-    await user.type(screen.getByLabelText(/Knowledge Base Name/i), 'Coach John AI');
-    await user.type(screen.getByLabelText(/Profession/i), 'Life Coach');
-    await user.click(screen.getByRole('button', { name: /Next/i }));
+    const nameInput = screen.getByLabelText(/Knowledge Base Name/i);
+    await user.clear(nameInput);
+    await user.type(nameInput, 'Brand New KB');
 
-    // Skip to step 4
-    await waitFor(() => screen.getByText('AI Configuration'));
-    await user.click(screen.getByRole('button', { name: /Next/i }));
-    await waitFor(() => screen.getByText('Personality Traits'));
-    await user.click(screen.getByRole('button', { name: /Next/i }));
-    await waitFor(() => screen.getByText('Capabilities'));
-
-    // Complete setup
-    const completeButton = screen.getByRole('button', { name: /Complete Setup/i });
-    await user.click(completeButton);
+    const submitButton = screen.getByRole('button', { name: /Create Knowledge Base/i });
+    await user.click(submitButton);
 
     await waitFor(() => {
-      expect(knowledgeBaseAPI.create).toHaveBeenCalled();
+      expect(knowledgeBaseAPI.create).toHaveBeenCalledWith(expect.objectContaining({
+        name: 'Brand New KB',
+      }));
       expect(mockNavigate).toHaveBeenCalledWith('/dashboard');
     });
+  });
+
+  it('navigates to dashboard when skip button is clicked', async () => {
+    const user = userEvent.setup();
+    renderOnboardingWizard();
+
+    await waitFor(() => {
+      expect(screen.getByText(/Welcome!/i)).toBeInTheDocument();
+    });
+
+    const skipButton = screen.getByRole('button', { name: /Skip for now/i });
+    await user.click(skipButton);
+
+    expect(mockNavigate).toHaveBeenCalledWith('/dashboard');
   });
 });
