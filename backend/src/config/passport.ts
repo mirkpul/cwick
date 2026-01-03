@@ -82,7 +82,6 @@ if (process.env.GOOGLE_OAUTH_CLIENT_ID && process.env.GOOGLE_OAUTH_CLIENT_SECRET
 if (process.env.GITHUB_OAUTH_CLIENT_ID && process.env.GITHUB_OAUTH_CLIENT_SECRET) {
     passport.use(
         new GitHubStrategy(
-            // @ts-expect-error - Passport Strategy type inference issue, code works correctly at runtime
             {
                 clientID: process.env.GITHUB_OAUTH_CLIENT_ID,
                 clientSecret: process.env.GITHUB_OAUTH_CLIENT_SECRET,
