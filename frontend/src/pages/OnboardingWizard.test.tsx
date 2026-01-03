@@ -103,7 +103,7 @@ describe('OnboardingWizard', () => {
 
     const toast = await import('react-hot-toast');
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith('Please enter a name for your knowledge base');
+      expect(toast.default.error).toHaveBeenCalledWith('Please enter a name for your knowledge base');
     });
   });
 
