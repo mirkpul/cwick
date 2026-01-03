@@ -267,12 +267,12 @@ describe('LLMService - Comprehensive Tests', () => {
 
     describe('generateStreamingResponse', () => {
         it('should handle streaming for all providers', async () => {
-            const onChunk = jest.fn();
-            const messages = [{ role: 'user' as const, content: 'Test' }];
+            const _onChunk = jest.fn();
+            const _messages = [{ role: 'user' as const, content: 'Test' }];
 
             const providers: Array<'openai' | 'anthropic' | 'gemini'> = ['openai', 'anthropic', 'gemini'];
 
-            for (const provider of providers) {
+            for (const _provider of providers) {
                 // This test just verifies the method exists and accepts correct parameters
                 expect(llmService.generateStreamingResponse).toBeDefined();
                 expect(typeof llmService.generateStreamingResponse).toBe('function');

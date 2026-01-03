@@ -296,7 +296,7 @@ describe('ContextService', () => {
                 { id: '4', content: 'Fact 4', title: 'Topic 4' },
             ];
 
-            const result = contextService.generateContextPreview(twin, knowledge);
+            const result = contextService.generateContextPreview(kb, knowledge);
 
             // Should only include first 3 entries
             expect(result.knowledgeBase).toContain('Fact 1');
@@ -308,7 +308,7 @@ describe('ContextService', () => {
         it('should handle null knowledge base', () => {
             const kb = { name: 'Assistant' };
 
-            const result = contextService.generateContextPreview(twin, null as never);
+            const result = contextService.generateContextPreview(kb, null as never);
 
             expect(result.knowledgeBase).toBe('');
         });
@@ -396,7 +396,7 @@ describe('ContextService', () => {
         it('should handle empty semantic results', () => {
             const kb = { name: 'Bot' };
 
-            const prompt = contextService.generateContinuationPrompt(twin, []);
+            const prompt = contextService.generateContinuationPrompt(kb, []);
 
             expect(prompt).toContain('NO CONTEXT AVAILABLE');
         });
@@ -462,16 +462,16 @@ describe('ContextService', () => {
         it('should handle empty knowledge base', () => {
             const kb = { name: 'Assistant' };
 
-            const prompt = contextService.generateEnhancedSystemPrompt(twin, [], null);
+            const prompt = contextService.generateEnhancedSystemPrompt(kb, [], null);
 
-            expect(prompt).not.toContain('# Knowledge Base');
+            expect(prompt).not.toMatch(/^# Knowledge Base$/m);
             expect(prompt).toContain('# Knowledge Base Identity');
         });
 
         it('should use defaults for missing knowledge base properties', () => {
             const kb = {};
 
-            const prompt = contextService.generateEnhancedSystemPrompt(twin, null, null);
+            const prompt = contextService.generateEnhancedSystemPrompt(kb, null, null);
 
             expect(prompt).toContain('digital assistant');
             expect(prompt).toContain('professional');
@@ -490,10 +490,10 @@ describe('ContextService', () => {
             const kb = { name: 'Assistant', profession: 'Helper' };
             const knowledge = [{ content: 'Data', title: 'Entry' }];
 
-            const result = contextService.generateSystemPrompt(twin, knowledge);
+            const result = contextService.generateSystemPrompt(kb, knowledge);
 
             // Should produce same result as generateEnhancedSystemPrompt with null semantic results
-            const expected = contextService.generateEnhancedSystemPrompt(twin, knowledge, null);
+            const expected = contextService.generateEnhancedSystemPrompt(kb, knowledge, null);
             expect(result).toBe(expected);
         });
     });

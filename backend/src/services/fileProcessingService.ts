@@ -10,7 +10,6 @@ import structuredTableExtractionService, { StructuredTable } from './structuredT
 import powerpointExtractionService, { PowerPointSlide } from './powerpointExtractionService';
 import llmService from './llmService';
 import type { KnowledgeBaseEntry } from './knowledgeBaseService';
-import vectorStoreService from './vectorStoreService';
 import db from '../config/database';
 import logger from '../config/logger';
 import config from '../config/appConfig';

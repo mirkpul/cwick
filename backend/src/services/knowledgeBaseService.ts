@@ -3,7 +3,6 @@ import logger from '../config/logger';
 import appConfig from '../config/appConfig';
 import LLMService, { LLMProvider } from './llmService';
 import FileProcessingService from './fileProcessingService';
-import vectorStoreService from './vectorStoreService';
 
 export interface KnowledgeBase {
     id: string;

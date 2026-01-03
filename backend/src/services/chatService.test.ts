@@ -1,8 +1,6 @@
 import chatService from './chatService';
 import db from '../config/database';
 import llmService from './llmService';
-import knowledgeBaseService from './knowledgeBaseService';
-import fileProcessingService from './fileProcessingService';
 import contextService from './contextService';
 
 jest.mock('../config/database');
@@ -514,7 +512,7 @@ describe('ChatService', () => {
             mockDb.query.mockRejectedValueOnce(new Error('Database error'));
 
             await expect(
-                chatService.generateTwinResponse('conv123', 'Hello')
+                chatService.generateKnowledgeBaseResponse('conv123', 'Hello')
             ).rejects.toThrow('Database error');
         });
     });

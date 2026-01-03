@@ -2,7 +2,6 @@ import { Pool } from 'pg';
 import logger from '../config/logger';
 import database from '../config/database';
 import type { LLMProvider } from './llmService';
-import vectorStoreService from './vectorStoreService';
 
 interface EmailEmbeddingCandidate {
   emailId: string;

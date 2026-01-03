@@ -166,7 +166,7 @@ describe('QueryEnhancementService', () => {
             };
             mockLlmService.generateResponse.mockResolvedValueOnce(mockResponse);
 
-            const result = await queryEnhancementService.generateQueryVariants('Query', {
+            await queryEnhancementService.generateQueryVariants('Query', {
                 count: 5,
             });
 
