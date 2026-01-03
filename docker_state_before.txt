@@ -1,6 +1,0 @@
-NAMES                  STATUS                 PORTS
-digitaltwin-nginx      Up 6 hours             0.0.0.0:80->80/tcp, [::]:80->80/tcp
-digitaltwin-frontend   Up 6 hours             0.0.0.0:3000->3000/tcp, [::]:3000->3000/tcp
-digitaltwin-backend    Up 6 hours             0.0.0.0:3001->3001/tcp, [::]:3001->3001/tcp
-digitaltwin-redis      Up 6 hours (healthy)   0.0.0.0:6379->6379/tcp, [::]:6379->6379/tcp
-digitaltwin-db         Up 6 hours (healthy)   0.0.0.0:5432->5432/tcp, [::]:5432->5432/tcp

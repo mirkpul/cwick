@@ -2,20 +2,27 @@ import authService from './authService';
 import db from '../config/database';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import knowledgeBaseService from './knowledgeBaseService';
 
 jest.mock('../config/database');
 jest.mock('bcrypt');
 jest.mock('jsonwebtoken');
 jest.mock('../config/logger');
+jest.mock('./knowledgeBaseService');
 
 const mockDb = db as jest.Mocked<typeof db>;
 const mockBcrypt = bcrypt as jest.Mocked<typeof bcrypt>;
 const mockJwt = jwt as jest.Mocked<typeof jwt>;
+const mockKBService = knowledgeBaseService as jest.Mocked<typeof knowledgeBaseService>;
 
 describe('AuthService', () => {
     beforeEach(() => {
         jest.clearAllMocks();
         process.env.JWT_SECRET = 'test-secret';
+        mockKBService.createKnowledgeBase.mockResolvedValue({
+            id: 'kb-123',
+            name: 'My Knowledge Base'
+        } as any);
     });
 
     describe('register', () => {
@@ -23,7 +30,7 @@ describe('AuthService', () => {
             const email = 'test@example.com';
             const password = 'password123';
             const fullName = 'Test User';
-            const role = 'professional';
+            const role = 'kb_owner';
 
             // Mock user doesn't exist
             mockDb.query.mockResolvedValueOnce({ rows: [] } as never);
@@ -76,11 +83,11 @@ describe('AuthService', () => {
             );
         });
 
-        it('should create subscription for professional role', async () => {
+        it('should create subscription for kb_owner role', async () => {
             const email = 'pro@example.com';
             const password = 'password123';
             const fullName = 'Pro User';
-            const role = 'professional';
+            const role = 'kb_owner';
 
             mockDb.query.mockResolvedValueOnce({ rows: [] } as never);
             mockBcrypt.hash.mockResolvedValue('hashed_password' as never);
@@ -142,7 +149,7 @@ describe('AuthService', () => {
                     email,
                     password_hash: 'hashed_password',
                     full_name: 'Test User',
-                    role: 'professional',
+                    role: 'kb_owner',
                     is_active: true
                 }]
             } as never);
@@ -198,7 +205,7 @@ describe('AuthService', () => {
                     email,
                     password_hash: 'hashed_password',
                     full_name: 'Test User',
-                    role: 'professional',
+                    role: 'kb_owner',
                     is_active: true
                 }]
             } as never);
@@ -220,7 +227,7 @@ describe('AuthService', () => {
                     id: userId,
                     email: 'test@example.com',
                     full_name: 'Test User',
-                    role: 'professional',
+                    role: 'kb_owner',
                     is_active: true,
                     email_verified: false,
                     created_at: new Date()
