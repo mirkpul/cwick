@@ -75,7 +75,7 @@ describe('LLM Service', () => {
                 // and the promise is handled.
                 try {
                     await llmService.generateResponse(provider, 'test-model', messages);
-                } catch (_err) {
+                } catch {
                     // Ignore errors as we are just checking routing/existence
                 }
             });
