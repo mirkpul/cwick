@@ -25,7 +25,7 @@ export default function OnboardingWizard(): React.JSX.Element {
     const checkExistingKB = async (): Promise<void> => {
       try {
         const response = await knowledgeBaseAPI.getMyKB();
-        if (response.data.knowledgeBase || response.data.twin) {
+        if (response.data.knowledgeBase) {
           toast.success('You already have a knowledge base. Redirecting to dashboard...');
           navigate('/dashboard');
         }
@@ -33,7 +33,7 @@ export default function OnboardingWizard(): React.JSX.Element {
         const apiError = error as ApiError;
         // If 404, user doesn't have a KB yet, proceed with onboarding
         if (apiError.response?.status !== 404) {
-          console.error('Error checking for existing KB:', error);
+          // Error checking for existing KB
         }
       } finally {
         setChecking(false);
@@ -94,7 +94,7 @@ export default function OnboardingWizard(): React.JSX.Element {
             Welcome! 🎉
           </h1>
           <p className="text-xl text-gray-600">
-            Let's create your first AI-powered knowledge base
+            Let&apos;s create your first AI-powered knowledge base
           </p>
         </div>
 
@@ -119,10 +119,11 @@ export default function OnboardingWizard(): React.JSX.Element {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="ai-provider" className="block text-sm font-medium text-gray-700 mb-2">
                 AI Provider
               </label>
               <select
+                id="ai-provider"
                 value={llmProvider}
                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
                   setLlmProvider(e.target.value);
@@ -144,10 +145,11 @@ export default function OnboardingWizard(): React.JSX.Element {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="ai-model" className="block text-sm font-medium text-gray-700 mb-2">
                 Model
               </label>
               <select
+                id="ai-model"
                 value={llmModel}
                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setLlmModel(e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-lg"
@@ -206,7 +208,7 @@ export default function OnboardingWizard(): React.JSX.Element {
           </form>
 
           <p className="mt-6 text-center text-sm text-gray-500">
-            Don't worry, you can always change these settings later from your dashboard
+            Don&apos;t worry, you can always change these settings later from your dashboard
           </p>
         </div>
       </div>

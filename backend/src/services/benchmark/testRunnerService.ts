@@ -42,7 +42,7 @@ interface ExecuteOptions {
     onProgress?: ((progress: number, current: number, total: number) => void) | null;
 }
 
-interface Twin {
+interface KnowledgeBaseConfig {
     id: string;
     user_id: string;
     llm_provider?: LLMProvider | string;
@@ -132,12 +132,12 @@ class TestRunnerService {
 
     // ==================== RUN MANAGEMENT ====================
 
-    async createRun(twinId: string, datasetId: string, options: RunOptions = {}): Promise<Run> {
+    async createRun(kbId: string, datasetId: string, options: RunOptions = {}): Promise<Run> {
         await this._loadDependencies();
 
         const { name, description, runType = 'full' } = options;
 
-        const ragConfig = await this.knowledgeBaseService!.getRAGConfig(twinId);
+        const ragConfig = await this.knowledgeBaseService!.getRAGConfig(kbId);
 
         const id = uuidv4();
         const result = await pool.query(
@@ -145,7 +145,7 @@ class TestRunnerService {
        (id, kb_id, dataset_id, name, description, run_type, rag_config, status)
        VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending')
        RETURNING *`,
-            [id, twinId, datasetId, name, description, runType, JSON.stringify(ragConfig)]
+            [id, kbId, datasetId, name, description, runType, JSON.stringify(ragConfig)]
         );
 
         return result.rows[0];
@@ -164,11 +164,11 @@ class TestRunnerService {
         return result.rows[0] || null;
     }
 
-    async listRuns(twinId: string, options: ListRunsOptions = {}): Promise<Run[]> {
+    async listRuns(kbId: string, options: ListRunsOptions = {}): Promise<Run[]> {
         const { status = null, limit = 20, offset = 0 } = options;
 
         const conditions = ['r.kb_id = $1'];
-        const values: unknown[] = [twinId];
+        const values: unknown[] = [kbId];
         let paramIndex = 2;
 
         if (status) {
@@ -239,14 +239,14 @@ class TestRunnerService {
                 throw new Error('No questions in dataset');
             }
 
-            const twin = await this._getTwin(run.kb_id);
+            const kb = await this._getKnowledgeBase(run.kb_id);
 
             let completed = 0;
             const results: Array<Record<string, unknown>> = [];
 
             for (const question of questions) {
                 try {
-                    const result = await this._executeQuestion(run, twin, question);
+                    const result = await this._executeQuestion(run, kb, question);
                     results.push(result);
                 } catch (error) {
                     console.error(`Error processing question ${question.id}:`, (error as Error).message);
@@ -290,22 +290,22 @@ class TestRunnerService {
         }
     }
 
-    private async _executeQuestion(run: Run, twin: Twin, question: DatasetQuestion): Promise<Record<string, unknown>> {
+    private async _executeQuestion(run: Run, kb: KnowledgeBaseConfig, question: DatasetQuestion): Promise<Record<string, unknown>> {
         const startTime = Date.now();
         const timings: Record<string, number | null> = {};
 
         const mockConversation: ConversationContext = {
             id: uuidv4(),
             kb_id: run.kb_id,
-            user_id: twin.user_id,
+            user_id: kb.user_id,
             status: 'active',
-            llm_provider: this._resolveLLMProvider(twin.llm_provider),
-            llm_model: twin.llm_model || 'gpt-5-mini',
-            temperature: typeof twin.temperature === 'number' ? twin.temperature : config.llm.defaultTemperature,
-            max_tokens: typeof twin.max_tokens === 'number' ? twin.max_tokens : config.llm.defaultMaxTokens,
-            semantic_search_threshold: typeof twin.semantic_search_threshold === 'number' ? twin.semantic_search_threshold : config.semanticSearch.sourceThresholds.knowledgeBase,
-            semantic_search_max_results: typeof twin.semantic_search_max_results === 'number'
-                ? twin.semantic_search_max_results
+            llm_provider: this._resolveLLMProvider(kb.llm_provider),
+            llm_model: kb.llm_model || 'gpt-5-mini',
+            temperature: typeof kb.temperature === 'number' ? kb.temperature : config.llm.defaultTemperature,
+            max_tokens: typeof kb.max_tokens === 'number' ? kb.max_tokens : config.llm.defaultMaxTokens,
+            semantic_search_threshold: typeof kb.semantic_search_threshold === 'number' ? kb.semantic_search_threshold : config.semanticSearch.sourceThresholds.knowledgeBase,
+            semantic_search_max_results: typeof kb.semantic_search_max_results === 'number'
+                ? kb.semantic_search_max_results
                 : config.semanticSearch.defaultMaxResults,
         };
 
@@ -327,7 +327,7 @@ class TestRunnerService {
         if (run.run_type !== 'retrieval_only') {
             const genStart = Date.now();
             const generation = await this._generateResponse(
-                twin,
+                kb,
                 question.question,
                 searchResults.context
             );
@@ -446,8 +446,8 @@ class TestRunnerService {
             retrieved_context_ids: retrievedIds,
             retrieved_context: searchResults.results,
             generated_answer: generatedAnswer,
-            llm_provider: twin.llm_provider,
-            llm_model: twin.llm_model,
+            llm_provider: kb.llm_provider,
+            llm_model: kb.llm_model,
             ...timings,
             prompt_tokens: generationTokens.prompt,
             completion_tokens: generationTokens.completion,
@@ -496,7 +496,7 @@ class TestRunnerService {
     }
 
     private async _generateResponse(
-        twin: Twin,
+        kb: KnowledgeBaseConfig,
         question: string,
         context: SearchResult[]
     ): Promise<{ answer: string | null; tokens: { prompt: number; completion: number } }> {
@@ -507,7 +507,7 @@ class TestRunnerService {
                 `[${index + 1}] ${chunk.title || 'Context'}: ${chunk.content || ''}`
             ).join('\n\n');
 
-            const systemPrompt = twin.system_prompt ||
+            const systemPrompt = kb.system_prompt ||
                 'You are a helpful assistant. Answer based on the provided context.';
 
             const messages: LLMMessage[] = [
@@ -522,12 +522,12 @@ class TestRunnerService {
             ];
 
             const response = await llmService.generateResponse(
-                this._resolveLLMProvider(twin.llm_provider),
-                twin.llm_model || 'gpt-5-mini',
+                this._resolveLLMProvider(kb.llm_provider),
+                kb.llm_model || 'gpt-5-mini',
                 messages,
                 undefined,
-                twin.temperature || 0.7,
-                twin.max_tokens || 500
+                kb.temperature || 0.7,
+                kb.max_tokens || 500
             );
 
             const usage = (response.metadata.usage as { prompt_tokens?: number; completion_tokens?: number }) || {};
@@ -548,7 +548,7 @@ class TestRunnerService {
         }
     }
 
-    private _resolveLLMProvider(provider?: Twin['llm_provider']): LLMProvider {
+    private _resolveLLMProvider(provider?: KnowledgeBaseConfig['llm_provider']): LLMProvider {
         return provider === 'anthropic' ? 'anthropic' : 'openai';
     }
 
@@ -609,10 +609,10 @@ class TestRunnerService {
         return result.rows[0];
     }
 
-    private async _getTwin(twinId: string): Promise<Twin> {
+    private async _getKnowledgeBase(kbId: string): Promise<KnowledgeBaseConfig> {
         const result = await pool.query(
             'SELECT * FROM knowledge_bases WHERE id = $1',
-            [twinId]
+            [kbId]
         );
         return result.rows[0];
     }

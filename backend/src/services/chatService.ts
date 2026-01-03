@@ -64,7 +64,7 @@ interface RAGSearchResult {
     [key: string]: unknown;
 }
 
-interface TwinResponse {
+interface KnowledgeBaseResponse {
     message?: Record<string, unknown>;
 }
 
@@ -233,9 +233,9 @@ class ChatService {
         }
     }
 
-    async generateTwinResponse(conversationId: string, _userMessage: string): Promise<TwinResponse> {
+    async generateKnowledgeBaseResponse(conversationId: string, _userMessage: string): Promise<KnowledgeBaseResponse> {
         try {
-            logger.debug('Generating twin response', { conversationId });
+            logger.debug('Generating knowledge base response', { conversationId });
 
             const convResult = await db.query(
                 `SELECT c.*, kb.* FROM conversations c
@@ -259,7 +259,7 @@ class ChatService {
                 messageCount: messages.length,
                 isFirstMessage,
                 kbId: conversation.kb_id,
-                twinName: conversation.name,
+                kbName: conversation.name,
             });
 
             let semanticResults: RAGSearchResult[] | null = null;
@@ -333,18 +333,18 @@ class ChatService {
                 message: savedMessage,
             };
         } catch (error) {
-            logger.error('Generate twin response error:', error);
+            logger.error('Generate knowledge base response error:', error);
             throw error;
         }
     }
 
-    async generateTwinResponseStreaming(
+    async generateKnowledgeBaseResponseStreaming(
         conversationId: string,
         _userMessage: string,
         onChunk: (chunk: string) => void | Promise<void>
-    ): Promise<TwinResponse> {
+    ): Promise<KnowledgeBaseResponse> {
         try {
-            logger.debug('Generating twin response (streaming)', { conversationId });
+            logger.debug('Generating knowledge base response (streaming)', { conversationId });
 
             const convResult = await db.query(
                 `SELECT c.*, kb.* FROM conversations c
@@ -420,7 +420,7 @@ class ChatService {
                 message: savedMessage,
             };
         } catch (error) {
-            logger.error('Generate twin response streaming error:', error);
+            logger.error('Generate knowledge base response streaming error:', error);
             throw error;
         }
     }
@@ -487,7 +487,7 @@ class ChatService {
                 kbThreshold,
                 emailThreshold,
                 maxResults,
-                usingPerTwinConfig: Boolean(ragConfig.knowledgeBaseThreshold),
+                usingPerKBConfig: Boolean(ragConfig.knowledgeBaseThreshold),
             });
 
             // Step 1: Query Enhancement
@@ -662,7 +662,7 @@ class ChatService {
                 conversationId: conversation.id,
                 query: userQuery,
                 config: {
-                    usingPerTwinConfig: Boolean(ragConfig.knowledgeBaseThreshold),
+                    usingPerKBConfig: Boolean(ragConfig.knowledgeBaseThreshold),
                     kbThreshold,
                     emailThreshold,
                     threshold,
@@ -700,7 +700,7 @@ class ChatService {
                 conversationId: conversation.id,
                 query: userQuery,
                 config: {
-                    usingPerTwinConfig: Boolean(ragConfig.knowledgeBaseThreshold),
+                    usingPerKBConfig: Boolean(ragConfig.knowledgeBaseThreshold),
                     kbThreshold,
                     emailThreshold,
                     threshold,

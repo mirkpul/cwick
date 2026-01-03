@@ -19,20 +19,20 @@ services:
   # =============================================================================
   postgres:
     image: pgvector/pgvector:pg16
-    container_name: digitaltwin-db
+    container_name: knowledgebase-db
     environment:
-      POSTGRES_DB: digitaltwin
-      POSTGRES_USER: digitaltwin_user
-      POSTGRES_PASSWORD: digitaltwin_pass
+      POSTGRES_DB: knowledgebase
+      POSTGRES_USER: knowledgebase_user
+      POSTGRES_PASSWORD: knowledgebase_pass
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./database/initdb:/docker-entrypoint-initdb.d
     networks:
-      - digitaltwin-network
+      - knowledgebase-network
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U digitaltwin_user -d digitaltwin" ]
+      test: [ "CMD-SHELL", "pg_isready -U knowledgebase_user -d knowledgebase" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -42,11 +42,11 @@ services:
   # =============================================================================
   redis:
     image: redis:7-alpine
-    container_name: digitaltwin-redis
+    container_name: knowledgebase-redis
     ports:
       - "6379:6379"
     networks:
-      - digitaltwin-network
+      - knowledgebase-network
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
       interval: 10s
@@ -60,7 +60,7 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
-    container_name: digitaltwin-backend
+    container_name: knowledgebase-backend
     environment:
       # Server
       NODE_ENV: development
@@ -69,7 +69,7 @@ services:
       CORS_ORIGIN: http://localhost:3000
 
       # Database
-      DATABASE_URL: postgresql://digitaltwin_user:digitaltwin_pass@postgres:5432/digitaltwin
+      DATABASE_URL: postgresql://knowledgebase_user:knowledgebase_pass@postgres:5432/knowledgebase
 
       # Security
       JWT_SECRET: ${JWT_SECRET:-your-secret-key-change-in-production}
@@ -118,7 +118,7 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - digitaltwin-network
+      - knowledgebase-network
     command: npm run dev --workspace=backend
 
   # =============================================================================
@@ -128,7 +128,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: digitaltwin-frontend
+    container_name: knowledgebase-frontend
     environment:
       # When using Nginx proxy (recommended), use relative URLs
       # When developing frontend directly, use http://localhost:3001
@@ -142,7 +142,7 @@ services:
     depends_on:
       - backend
     networks:
-      - digitaltwin-network
+      - knowledgebase-network
     command: npm run dev
 
   # =============================================================================
@@ -150,7 +150,7 @@ services:
   # =============================================================================
   nginx:
     image: nginx:alpine
-    container_name: digitaltwin-nginx
+    container_name: knowledgebase-nginx
     ports:
       - "80:80"
     volumes:
@@ -159,7 +159,7 @@ services:
       - frontend
       - backend
     networks:
-      - digitaltwin-network
+      - knowledgebase-network
 
 # =============================================================================
 # VOLUMES
@@ -172,5 +172,5 @@ volumes:
 # NETWORKS
 # =============================================================================
 networks:
-  digitaltwin-network:
+  knowledgebase-network:
     driver: bridge

@@ -69,14 +69,14 @@ class DatasetService {
   /**
    * Create a new benchmark dataset
    */
-  async createDataset(twinId: string, { name, description, datasetType = 'golden', tags = [] }: CreateDatasetParams): Promise<Dataset> {
+  async createDataset(kbId: string, { name, description, datasetType = 'golden', tags = [] }: CreateDatasetParams): Promise<Dataset> {
     const id = uuidv4();
     const result = await pool.query<Dataset>(
       `INSERT INTO benchmark_datasets
        (id, kb_id, name, description, dataset_type, tags)
        VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
-      [id, twinId, name, description, datasetType, JSON.stringify(tags)]
+      [id, kbId, name, description, datasetType, JSON.stringify(tags)]
     );
     return result.rows[0];
   }
@@ -100,7 +100,7 @@ class DatasetService {
   /**
    * List datasets for a twin
    */
-  async listDatasets(twinId: string, { includeInactive = false, limit = 50, offset = 0 }: ListOptions = {}): Promise<Dataset[]> {
+  async listDatasets(kbId: string, { includeInactive = false, limit = 50, offset = 0 }: ListOptions = {}): Promise<Dataset[]> {
     const whereClause = includeInactive
       ? 'WHERE d.kb_id = $1'
       : 'WHERE d.kb_id = $1 AND d.is_active = true';
@@ -114,7 +114,7 @@ class DatasetService {
        GROUP BY d.id
        ORDER BY d.created_at DESC
        LIMIT $2 OFFSET $3`,
-      [twinId, limit, offset]
+      [kbId, limit, offset]
     );
     return result.rows;
   }
@@ -446,14 +446,14 @@ class DatasetService {
   /**
    * Import dataset from JSON
    */
-  async importFromJson(twinId: string, jsonData: Record<string, unknown>): Promise<Dataset> {
+  async importFromJson(kbId: string, jsonData: Record<string, unknown>): Promise<Dataset> {
     const name = jsonData.name as string;
     const description = jsonData.description as string;
     const datasetType = (jsonData.datasetType as string) || 'golden';
     const tags = (jsonData.tags as string[]) || [];
     const questions = (jsonData.questions as Record<string, unknown>[]) || [];
 
-    const dataset = await this.createDataset(twinId, {
+    const dataset = await this.createDataset(kbId, {
       name,
       description,
       datasetType,

@@ -53,11 +53,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Ensure Rollup native binary
-        run: |
-          ROLLUP_VERSION=$(node -p "require('rollup/package.json').version")
-          npm ls @rollup/rollup-linux-x64-gnu >/dev/null 2>&1 || npm install --no-save @rollup/rollup-linux-x64-gnu@${ROLLUP_VERSION}
-
       - name: Run TypeScript type checking
         run: npm run type-check
 
@@ -115,6 +110,11 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Ensure Rollup native binary
+        run: |
+          ROLLUP_VERSION=$(node -p "require('rollup/package.json').version")
+          npm ls @rollup/rollup-linux-x64-gnu >/dev/null 2>&1 || npm install --no-save @rollup/rollup-linux-x64-gnu@${ROLLUP_VERSION}
 
       - name: Run TypeScript type checking
         run: npm run type-check

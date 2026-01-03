@@ -86,7 +86,7 @@ npm install
 psql -U postgres -f database/init_db.sql
 
 # Run migrations
-psql -U digitaltwin_user -d digitaltwin -f database/migrations/001_initial_schema.sql
+psql -U knowledgebase_user -d knowledgebase -f database/migrations/001_initial_schema.sql
 
 # Start development server
 npm run dev
@@ -225,7 +225,7 @@ npm run test:coverage
 
 ```env
 # Database
-DATABASE_URL=postgresql://digitaltwin_user:digitaltwin_pass@localhost:5432/digitaltwin
+DATABASE_URL=postgresql://knowledgebase_user:knowledgebase_pass@localhost:5432/knowledgebase
 
 # LLM Providers (at least one required)
 OPENAI_API_KEY=sk-...

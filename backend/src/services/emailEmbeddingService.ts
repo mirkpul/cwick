@@ -2,7 +2,6 @@ import { Pool } from 'pg';
 import logger from '../config/logger';
 import database from '../config/database';
 import type { LLMProvider } from './llmService';
-import vectorStoreService from './vectorStoreService';
 
 interface EmailEmbeddingCandidate {
   emailId: string;
@@ -55,14 +54,6 @@ class EmailEmbeddingService {
          WHERE id = $3`,
         [JSON.stringify(embedding), provider === 'openai' ? 'text-embedding-3-small' : 'unknown', emailId]
       );
-
-      // Push to vector service if enabled
-      await vectorStoreService.upsertEmbedding({
-        id: emailId,
-        vector: embedding,
-        metadata: { source: 'email', provider },
-        namespace: 'email',
-      });
 
       logger.debug('Email embedding generated and stored', {
         emailId,

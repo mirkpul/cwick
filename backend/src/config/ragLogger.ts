@@ -46,7 +46,7 @@ interface SearchResult {
 interface SearchConfig {
   threshold?: number;
   maxResults?: number;
-  usingPerTwinConfig?: boolean;
+  usingPerKBConfig?: boolean;
   kbThreshold?: number;
   emailThreshold?: number;
 }
@@ -340,9 +340,9 @@ export function logPipelineSummary(data: PipelineSummaryData): void {
   // Query
   console.log(`${c.cyan}Query:${c.reset} "${query?.substring(0, 60)}${query && query.length > 60 ? '...' : ''}"`);
 
-  // Config (if using per-twin)
-  if (config.usingPerTwinConfig) {
-    console.log(`${c.cyan}Config:${c.reset} ${c.green}per-twin${c.reset} (KB≥${Math.round((config.kbThreshold || 0.7) * 100)}% Email≥${Math.round((config.emailThreshold || 0.7) * 100)}%)`);
+  // Config (if using per-KB)
+  if (config.usingPerKBConfig) {
+    console.log(`${c.cyan}Config:${c.reset} ${c.green}per-KB${c.reset} (KB≥${Math.round((config.kbThreshold || 0.7) * 100)}% Email≥${Math.round((config.emailThreshold || 0.7) * 100)}%)`);
   } else {
     console.log(`${c.cyan}Config:${c.reset} default (threshold≥${Math.round((config.threshold || 0.7) * 100)}%)`);
   }

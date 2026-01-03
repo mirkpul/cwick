@@ -3,7 +3,6 @@ import logger from '../config/logger';
 import appConfig from '../config/appConfig';
 import LLMService, { LLMProvider } from './llmService';
 import FileProcessingService from './fileProcessingService';
-import vectorStoreService from './vectorStoreService';
 
 export interface KnowledgeBase {
     id: string;
@@ -232,13 +231,6 @@ class KnowledgeBaseService {
 
             logger.info(`Knowledge entry added with embedding: ${result.rows[0].id}`);
 
-            // Push to vector service if enabled
-            await vectorStoreService.upsertEmbedding({
-                id: result.rows[0].id,
-                vector: embedding,
-                metadata: { kbId, source: 'knowledge_base', title },
-                namespace: 'knowledge_base',
-            });
             return result.rows[0] as KnowledgeBaseEntry;
         } catch (error) {
             logger.error('Add knowledge base entry error:', error);

@@ -71,18 +71,18 @@ docker-compose logs -f backend
 docker-compose logs -f frontend
 
 # Database access
-docker exec -it digitaltwin-db psql -U digitaltwin_user -d digitaltwin
+docker exec -it knowledgebase-db psql -U knowledgebase_user -d knowledgebase
 ```
 
 ### Database Commands
 
 ```bash
 # Run migrations manually
-psql -U digitaltwin_user -d digitaltwin -f database/migrations/001_initial_schema.sql
-psql -U digitaltwin_user -d digitaltwin -f database/migrations/002_email_knowledge_base.sql
+psql -U knowledgebase_user -d knowledgebase -f database/migrations/001_initial_schema.sql
+psql -U knowledgebase_user -d knowledgebase -f database/migrations/002_email_knowledge_base.sql
 
 # Access database in Docker
-docker exec -it digitaltwin-db psql -U digitaltwin_user -d digitaltwin
+docker exec -it knowledgebase-db psql -U knowledgebase_user -d knowledgebase
 ```
 
 ## Architecture
@@ -230,7 +230,7 @@ Required environment variables (see `.env.example`):
 
 ```env
 # Database
-DATABASE_URL=postgresql://digitaltwin_user:digitaltwin_pass@localhost:5432/digitaltwin
+DATABASE_URL=postgresql://knowledgebase_user:knowledgebase_pass@localhost:5432/knowledgebase
 
 # LLM Providers (at least one required)
 OPENAI_API_KEY=sk-...

@@ -23,17 +23,17 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: digitaltwin_user
+-- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: knowledgebase_user
 --
 
 INSERT INTO public.users (id, email, password_hash, full_name, role, is_active, email_verified, created_at, updated_at) VALUES ('2bf3e9dc-11f9-4e10-ba20-315b256620ad', 'mirkopuliafito@gmail.com', '$2b$10$si2hxXTEeYrL7dJEI43V4OzYLui1JrsjQK7keqmYDP5IAyJYdMawm', 'Mirko', 'professional', true, false, '2025-12-09 13:00:17.159306', '2025-12-09 13:00:17.159306');
 
 
 --
--- Data for Name: digital_twins; Type: TABLE DATA; Schema: public; Owner: digitaltwin_user
+-- Data for Name: knowledge_bases; Type: TABLE DATA; Schema: public; Owner: knowledgebase_user
 --
 
-INSERT INTO public.digital_twins (id, user_id, name, profession, bio, avatar_url, llm_provider, llm_model, system_prompt, temperature, max_tokens, personality_traits, communication_style, capabilities, services, pricing_info, availability_schedule, handover_threshold, auto_responses_enabled, semantic_search_threshold, semantic_search_max_results, is_active, created_at, updated_at) VALUES ('69f3e79d-da1f-452b-90b8-15c32b384ff4', '2bf3e9dc-11f9-4e10-ba20-315b256620ad', 'Mirko', 'CEO', '', NULL, 'openai', 'gpt-5-mini', 'You are Mirko, CEO. 
+INSERT INTO public.knowledge_bases (id, user_id, name, profession, bio, avatar_url, llm_provider, llm_model, system_prompt, temperature, max_tokens, personality_traits, communication_style, capabilities, services, pricing_info, availability_schedule, handover_threshold, auto_responses_enabled, semantic_search_threshold, semantic_search_max_results, is_active, created_at, updated_at) VALUES ('69f3e79d-da1f-452b-90b8-15c32b384ff4', '2bf3e9dc-11f9-4e10-ba20-315b256620ad', 'Mirko', 'CEO', '', NULL, 'openai', 'gpt-5-mini', 'You are Mirko, CEO. 
 
 Communication Style: 
 
@@ -41,32 +41,32 @@ When you cannot adequately answer a question or if the user needs personalized s
 
 
 --
--- Data for Name: analytics_events; Type: TABLE DATA; Schema: public; Owner: digitaltwin_user
+-- Data for Name: analytics_events; Type: TABLE DATA; Schema: public; Owner: knowledgebase_user
 --
 
 
 
 --
--- Data for Name: end_users; Type: TABLE DATA; Schema: public; Owner: digitaltwin_user
+-- Data for Name: end_users; Type: TABLE DATA; Schema: public; Owner: knowledgebase_user
 --
 
 
 
 --
--- Data for Name: conversations; Type: TABLE DATA; Schema: public; Owner: digitaltwin_user
+-- Data for Name: conversations; Type: TABLE DATA; Schema: public; Owner: knowledgebase_user
 --
 
 
 
 --
--- Data for Name: email_credentials; Type: TABLE DATA; Schema: public; Owner: digitaltwin_user
+-- Data for Name: email_credentials; Type: TABLE DATA; Schema: public; Owner: knowledgebase_user
 --
 
 INSERT INTO public.email_credentials (id, user_id, provider, email_address, encrypted_access_token, encrypted_refresh_token, token_expires_at, imap_host, imap_port, encrypted_imap_password, auto_sync_enabled, sync_frequency_hours, last_sync_at, last_sync_status, last_sync_error, months_to_import, max_emails_limit, current_email_count, is_active, created_at, updated_at) VALUES ('1a98abde-d32a-4142-a58c-f450b2d53862', '2bf3e9dc-11f9-4e10-ba20-315b256620ad', 'gmail', 'mirko.puliafito@digitiamo.com', '2b62b765a0ad9e4a0d8a58c6c5571697:3b3790f22d5a38f4fb2adc5b5d767d85:ed102e8c618e12dae1ab9356bb594e801dac727f52d7293f3858e7603e17e17ef653d4567b049e1236126c7bc35d2cc7d673301eb698ef44b6b3dfc8e79acde576d7569198768d8617fc59948beb1994937f5ab916eb7da47a862b7ba24b1772e586939781821a21bbb62b2adfd8549219e5f548c634d1b37627e196783ab5667db60c2998dea5ec7119665f5d520f7eb66a11767cd4477cac3858749c450791eddff259df335fc0e6c2c38e54c5f5fb3d0517ba9768a89a473e77afb3c41ae0be92164539183c5eda7e9ebda0236b0300c759e4e7dee16c44fff066885391413cd290f8b8752fb87b1021ac8a768d61275e09d4d9a7b015f0386fe9e0', '07c0fe787d311e1093a4e7125ec85b55:2149657519c7ac50d40040290c614091:388b6483b3f592e02cf5e3fe6690b63f15ffeee443d0411b2eb33a3d96ff886f9c962cee6c6da6557353839c54e630b04da07f47e038c3ec79ace6bb1776200d178a00c9b7d6c6a3f22b3a69b0a5709e0bbe89e2d379a37224e64293a3272f92be800f79e763b6', '2025-12-09 14:02:59.964', NULL, NULL, NULL, false, 24, '2025-12-09 13:03:14.518439', 'success', NULL, 6, 1000, 4, true, '2025-12-09 13:03:01.140342', '2025-12-09 13:03:14.518439');
 
 
 --
--- Data for Name: email_knowledge; Type: TABLE DATA; Schema: public; Owner: digitaltwin_user
+-- Data for Name: email_knowledge; Type: TABLE DATA; Schema: public; Owner: knowledgebase_user
 --
 
 INSERT INTO public.email_knowledge (id, user_id, credential_id, email_id, thread_id, subject, sender_email, sender_name, recipients, cc_recipients, sent_at, body_text, body_html, is_reply, in_reply_to, has_attachments, attachment_count, attachments_metadata, labels, is_important, is_starred, embedding, has_sensitive_data, redacted_fields, search_weight, created_at, updated_at) VALUES ('e916a8e1-b660-453b-8c20-eecef970d9e0', '2bf3e9dc-11f9-4e10-ba20-315b256620ad', '1a98abde-d32a-4142-a58c-f450b2d53862', '19afe5a59f5c4b09', '19af482da6c4a3e7', 'RE: Proposta AIKU', '', NULL, '[{"name": "mirko.puliafito", "email": "mirko.puliafito@digitiamo.com"}]', '[{"name": "Rosbeh Zakikhani", "email": "rosbeh.zakikhani@aiknowyou.ai"}]', '2025-12-08 14:25:17', 'Ciao Mirko,
@@ -6381,20 +6381,20 @@ Marketing Department<br>
 
 
 --
--- Data for Name: email_sync_history; Type: TABLE DATA; Schema: public; Owner: digitaltwin_user
+-- Data for Name: email_sync_history; Type: TABLE DATA; Schema: public; Owner: knowledgebase_user
 --
 
 INSERT INTO public.email_sync_history (id, credential_id, sync_type, started_at, completed_at, status, emails_processed, emails_added, emails_skipped, emails_failed, error_message, error_details, created_at) VALUES ('28133489-d181-4c37-84f7-357dfaa1bb91', '1a98abde-d32a-4142-a58c-f450b2d53862', 'initial', '2025-12-09 13:03:13.228845', '2025-12-09 13:03:14.51796', 'completed', 4, 4, 0, 0, NULL, NULL, '2025-12-09 13:03:13.228845');
 
 
 --
--- Data for Name: handover_notifications; Type: TABLE DATA; Schema: public; Owner: digitaltwin_user
+-- Data for Name: handover_notifications; Type: TABLE DATA; Schema: public; Owner: knowledgebase_user
 --
 
 
 
 --
--- Data for Name: knowledge_base; Type: TABLE DATA; Schema: public; Owner: digitaltwin_user
+-- Data for Name: knowledge_base; Type: TABLE DATA; Schema: public; Owner: knowledgebase_user
 --
 
 INSERT INTO public.knowledge_base (id, twin_id, title, content, content_type, source_url, metadata, embedding, file_name, file_size, file_type, chunk_index, total_chunks, parent_entry_id, created_at, updated_at) VALUES ('0360f253-beed-4485-a627-cfdb6809333a', '69f3e79d-da1f-452b-90b8-15c32b384ff4', 'Digitiamo - Company Profile 2025.pdf - Part 1', 'Empowering knowledge through AI
@@ -7634,13 +7634,13 @@ mirko.puliafito@digitiamo.com', 'document', NULL, NULL, '[-0.012302854,0.0092256
 
 
 --
--- Data for Name: messages; Type: TABLE DATA; Schema: public; Owner: digitaltwin_user
+-- Data for Name: messages; Type: TABLE DATA; Schema: public; Owner: knowledgebase_user
 --
 
 
 
 --
--- Data for Name: subscriptions; Type: TABLE DATA; Schema: public; Owner: digitaltwin_user
+-- Data for Name: subscriptions; Type: TABLE DATA; Schema: public; Owner: knowledgebase_user
 --
 
 INSERT INTO public.subscriptions (id, user_id, tier, stripe_customer_id, stripe_subscription_id, monthly_message_limit, messages_used_this_month, current_period_start, current_period_end, is_active, created_at, updated_at) VALUES ('fb6fa29c-c972-48c3-8889-72652401cfda', '2bf3e9dc-11f9-4e10-ba20-315b256620ad', 'free', NULL, NULL, 100, 0, '2025-12-09 13:00:17.205775', '2026-01-08 13:00:17.205775', true, '2025-12-09 13:00:17.205775', '2025-12-09 13:00:17.205775');

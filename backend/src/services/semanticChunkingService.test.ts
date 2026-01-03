@@ -416,7 +416,6 @@ describe('SemanticChunkingService', () => {
         });
 
         it('should apply contextual enrichment when enabled', async () => {
-            const content = 'Test content.';
 
             mockLlmService.generateBatchEmbeddings.mockResolvedValueOnce([[0.5, 0.5]]);
 
@@ -443,7 +442,6 @@ describe('SemanticChunkingService', () => {
         });
 
         it('should handle enrichment errors gracefully', async () => {
-            const content = 'Test.';
 
             mockLlmService.generateBatchEmbeddings.mockResolvedValueOnce([[0.5]]);
             mockContextualEnrichmentService.isEnrichmentEnabled.mockReturnValueOnce(true);

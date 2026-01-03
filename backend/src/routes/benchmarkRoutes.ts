@@ -11,8 +11,8 @@ const router = Router();
 // All routes require authentication
 router.use(auth);
 
-// All routes require professional or super_admin role
-router.use(requireRole(['professional', 'super_admin']));
+// All routes require kb_owner or super_admin role
+router.use(requireRole(['kb_owner', 'super_admin']));
 
 // ==================== DATASET ROUTES ====================
 

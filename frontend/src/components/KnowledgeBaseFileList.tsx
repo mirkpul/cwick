@@ -5,12 +5,12 @@ import { knowledgeBaseAPI } from '../services/api';
 import { UploadedFile } from '../types';
 
 interface KnowledgeBaseFileListProps {
-  twinId: string;
+  kbId: string;
   files: UploadedFile[];
   onFileDeleted: (fileId: string) => void;
 }
 
-const KnowledgeBaseFileList: React.FC<KnowledgeBaseFileListProps> = ({ twinId, files, onFileDeleted }) => {
+const KnowledgeBaseFileList: React.FC<KnowledgeBaseFileListProps> = ({ kbId, files, onFileDeleted }) => {
   const [deletingFileId, setDeletingFileId] = useState<string | null>(null);
 
   const formatFileSize = (bytes: number): string => {
@@ -59,7 +59,7 @@ const KnowledgeBaseFileList: React.FC<KnowledgeBaseFileListProps> = ({ twinId, f
 
     setDeletingFileId(fileId);
     try {
-      await knowledgeBaseAPI.deleteKnowledgeFile(twinId, fileId);
+      await knowledgeBaseAPI.deleteKnowledgeFile(kbId, fileId);
       toast.success('File deleted successfully');
       onFileDeleted(fileId);
     } catch (error: unknown) {

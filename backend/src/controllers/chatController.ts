@@ -49,13 +49,13 @@ class ChatController {
       const userMessage = await chatService.sendMessage(conversationId, 'user', content);
       console.log(`[DEBUG] User message saved: ${userMessage.id}, content: "${content.substring(0, 50)}..."`);
 
-      // Generate and save twin response
-      console.log(`[DEBUG] Calling generateTwinResponse for conversation ${conversationId}`);
-      const twinResponse = await chatService.generateTwinResponse(conversationId, userMessage.content);
+      // Generate and save knowledge base response
+      console.log(`[DEBUG] Calling generateKnowledgeBaseResponse for conversation ${conversationId}`);
+      const kbResponse = await chatService.generateKnowledgeBaseResponse(conversationId, userMessage.content);
 
       res.json({
         userMessage,
-        twinResponse: twinResponse.message,
+        assistantResponse: kbResponse.message,
       });
     } catch (error) {
       next(error);

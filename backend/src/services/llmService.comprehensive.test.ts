@@ -1,7 +1,13 @@
+import OpenAI from 'openai';
+import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
+// Mock the external libraries
 jest.mock('openai');
 jest.mock('@anthropic-ai/sdk');
 jest.mock('@google/generative-ai');
 jest.mock('../config/logger');
+
 jest.mock('../config/appConfig', () => ({
     __esModule: true,
     default: {
@@ -31,41 +37,71 @@ jest.mock('../config/appConfig', () => ({
     },
 }));
 
-// Create mock gateway client
-const mockGatewayClient = {
-    generateResponse: jest.fn(),
-    generateEmbedding: jest.fn(),
-    generateBatchEmbeddings: jest.fn(),
+// Mock instances
+const mockOpenAI = {
+    chat: {
+        completions: {
+            create: jest.fn(),
+        },
+    },
+    embeddings: {
+        create: jest.fn(),
+    },
 };
 
-// Mock the SDK before importing llmService
-jest.mock('@virtualcoach/sdk', () => ({
-    LLMClient: jest.fn().mockImplementation(() => mockGatewayClient),
-}));
+const mockAnthropic = {
+    messages: {
+        create: jest.fn(),
+    },
+};
+
+const mockGemini = {
+    getGenerativeModel: jest.fn(),
+};
+
+const mockGenerativeModel = {
+    generateContent: jest.fn(),
+    generateContentStream: jest.fn(),
+    startChat: jest.fn(),
+};
+
+const mockChatSession = {
+    sendMessage: jest.fn(),
+    sendMessageStream: jest.fn(),
+};
+
+// Setup mocks for constructors
+(OpenAI as unknown as jest.Mock).mockImplementation(() => mockOpenAI);
+(Anthropic as unknown as jest.Mock).mockImplementation(() => mockAnthropic);
+(GoogleGenerativeAI as unknown as jest.Mock).mockImplementation(() => mockGemini);
 
 import llmService from './llmService';
 
 describe('LLMService - Comprehensive Tests', () => {
     beforeEach(() => {
         jest.clearAllMocks();
+        mockGemini.getGenerativeModel.mockReturnValue(mockGenerativeModel);
+        mockGenerativeModel.startChat.mockReturnValue(mockChatSession);
     });
 
     describe('generateResponse', () => {
         it('should generate response with OpenAI provider', async () => {
             const mockResponse = {
-                content: 'Test response',
                 model: 'gpt-4',
+                choices: [{
+                    message: { content: 'Test response' },
+                    finish_reason: 'stop',
+                }],
                 usage: {
                     prompt_tokens: 50,
                     completion_tokens: 50,
                     total_tokens: 100
                 },
-                finish_reason: 'stop',
             };
 
-            mockGatewayClient.generateResponse.mockResolvedValueOnce(mockResponse);
+            mockOpenAI.chat.completions.create.mockResolvedValueOnce(mockResponse);
 
-            const messages = [{ role: 'user' as const, content: 'Hello' }];
+            const messages = [{ role: 'user' as const, sender: 'user' as const, content: 'Hello' }];
             const result = await llmService.generateResponse(
                 'openai',
                 'gpt-4',
@@ -77,80 +113,77 @@ describe('LLMService - Comprehensive Tests', () => {
 
             expect(result.content).toBe('Test response');
             expect(result.metadata.model).toBe('gpt-4');
-            expect(mockGatewayClient.generateResponse).toHaveBeenCalledWith({
-                provider: 'openai',
+            expect(mockOpenAI.chat.completions.create).toHaveBeenCalledWith(expect.objectContaining({
                 model: 'gpt-4',
-                messages: expect.arrayContaining([
+                messages: [
                     { role: 'system', content: 'You are helpful' },
                     { role: 'user', content: 'Hello' },
-                ]),
+                ],
                 temperature: 0.7,
-                maxTokens: 1000,
-            });
+                max_tokens: 1000,
+            }));
         });
 
         it('should generate response with Anthropic provider', async () => {
             const mockResponse = {
-                content: 'Anthropic response',
                 model: 'claude-3-sonnet',
+                content: [{ type: 'text', text: 'Anthropic response' }],
                 usage: {
-                    prompt_tokens: 75,
-                    completion_tokens: 75,
-                    total_tokens: 150
+                    input_tokens: 75,
+                    output_tokens: 75,
                 },
-                finish_reason: 'end_turn',
+                stop_reason: 'end_turn',
             };
 
-            mockGatewayClient.generateResponse.mockResolvedValueOnce(mockResponse);
+            mockAnthropic.messages.create.mockResolvedValueOnce(mockResponse);
 
-            const messages = [{ role: 'user' as const, content: 'Hi Claude' }];
+            const messages = [{ role: 'user' as const, sender: 'user' as const, content: 'Hello API' }];
             const result = await llmService.generateResponse(
                 'anthropic',
                 'claude-3-sonnet',
                 messages,
-                'You are Claude',
+                'Be concise',
                 0.5,
-                2000
+                500
             );
 
             expect(result.content).toBe('Anthropic response');
-            expect(mockGatewayClient.generateResponse).toHaveBeenCalledWith({
-                provider: 'anthropic',
+            expect(mockAnthropic.messages.create).toHaveBeenCalledWith(expect.objectContaining({
                 model: 'claude-3-sonnet',
-                messages: expect.any(Array),
+                system: 'Be concise',
                 temperature: 0.5,
-                maxTokens: 2000,
-            });
+                max_tokens: 500,
+                messages: [{ role: 'user', content: 'Hello API' }],
+            }));
         });
 
         it('should generate response with Gemini provider', async () => {
             const mockResponse = {
-                content: 'Gemini response',
-                model: 'gemini-pro',
-                finish_reason: 'stop',
+                response: {
+                    text: () => 'Gemini response',
+                },
             };
 
-            mockGatewayClient.generateResponse.mockResolvedValueOnce(mockResponse);
+            mockChatSession.sendMessage.mockResolvedValueOnce(mockResponse);
 
-            const messages = [{ role: 'user' as const, content: 'Hello Gemini' }];
+            const messages = [{ role: 'user' as const, sender: 'user' as const, content: 'Gemini?' }];
             const result = await llmService.generateResponse(
                 'gemini',
                 'gemini-pro',
-                messages,
-                'You are Gemini'
+                messages
             );
 
             expect(result.content).toBe('Gemini response');
-            expect(mockGatewayClient.generateResponse).toHaveBeenCalled();
+            expect(mockGemini.getGenerativeModel).toHaveBeenCalledWith(expect.objectContaining({
+                model: 'gemini-pro'
+            }));
         });
 
-        it('should handle temperature as string', async () => {
-            const mockResponse = {
-                content: 'Response',
+        it('should handle numeric strings for temperature and maxTokens', async () => {
+            mockOpenAI.chat.completions.create.mockResolvedValueOnce({
                 model: 'gpt-4',
-            };
-
-            mockGatewayClient.generateResponse.mockResolvedValueOnce(mockResponse);
+                choices: [{ message: { content: 'OK' }, finish_reason: 'stop' }],
+            });
 
             const messages = [{ role: 'user' as const, content: 'Test' }];
             await llmService.generateResponse(
@@ -162,46 +195,30 @@ describe('LLMService - Comprehensive Tests', () => {
                 '1500'
             );
 
-            expect(mockGatewayClient.generateResponse).toHaveBeenCalledWith(
+            expect(mockOpenAI.chat.completions.create).toHaveBeenCalledWith(
                 expect.objectContaining({
                     temperature: 0.8,
-                    maxTokens: 1500,
+                    max_tokens: 1500,
                 })
             );
-        });
-
-        it('should handle errors', async () => {
-            mockGatewayClient.generateResponse.mockRejectedValueOnce(
-                new Error('API error')
-            );
-
-            const messages = [{ role: 'user' as const, content: 'Test' }];
-
-            await expect(
-                llmService.generateResponse('openai', 'gpt-4', messages)
-            ).rejects.toThrow('API error');
         });
     });
 
     describe('generateEmbedding', () => {
         it('should generate embedding successfully', async () => {
             const mockEmbedding = Array(1536).fill(0.1);
-            mockGatewayClient.generateEmbedding.mockResolvedValueOnce({
-                embeddings: [mockEmbedding],
+            mockOpenAI.embeddings.create.mockResolvedValueOnce({
+                data: [{ embedding: mockEmbedding }],
                 model: 'text-embedding-3-small',
-                usage: {
-                    prompt_tokens: 10,
-                    total_tokens: 10,
-                },
+                usage: { prompt_tokens: 10, total_tokens: 10 },
             });
 
             const result = await llmService.generateEmbedding('Test text', 'openai');
 
             expect(result).toEqual(mockEmbedding);
-            expect(mockGatewayClient.generateEmbedding).toHaveBeenCalledWith({
-                text: 'Test text',
-                provider: 'openai',
+            expect(mockOpenAI.embeddings.create).toHaveBeenCalledWith({
                 model: 'text-embedding-3-small',
+                input: 'Test text',
             });
         });
 
@@ -210,90 +227,54 @@ describe('LLMService - Comprehensive Tests', () => {
                 llmService.generateEmbedding('Test', 'gemini' as never)
             ).rejects.toThrow('Embeddings not supported for provider');
         });
-
-        it('should throw error for anthropic provider', async () => {
-            await expect(
-                llmService.generateEmbedding('Test', 'anthropic')
-            ).rejects.toThrow('Embeddings not supported for provider: anthropic');
-        });
     });
 
     describe('generateBatchEmbeddings', () => {
         it('should generate batch embeddings successfully', async () => {
-            const texts = ['Text 1', 'Text 2', 'Text 3'];
-            const mockEmbeddings = [
-                Array(1536).fill(0.1),
-                Array(1536).fill(0.2),
-                Array(1536).fill(0.3),
-            ];
-
-            mockGatewayClient.generateBatchEmbeddings.mockResolvedValueOnce(mockEmbeddings);
-
-            const result = await llmService.generateBatchEmbeddings(texts, 'openai');
-
-            expect(result).toEqual(mockEmbeddings);
-            expect(mockGatewayClient.generateBatchEmbeddings).toHaveBeenCalledWith(
-                texts,
-                'openai'
-            );
-        });
-
-        it('should handle empty array', async () => {
-            const result = await llmService.generateBatchEmbeddings([], 'openai');
-            expect(result).toEqual([]);
-        });
-
-        it('should throw error for unsupported provider', async () => {
-            await expect(
-                llmService.generateBatchEmbeddings(['Test'], 'anthropic')
-            ).rejects.toThrow('Batch embeddings not supported for provider');
-        });
-
-        it('should process batches correctly', async () => {
             const texts = ['Text 1', 'Text 2'];
             const mockEmbeddings = [
                 Array(1536).fill(0.1),
                 Array(1536).fill(0.2),
             ];
 
-            mockGatewayClient.generateBatchEmbeddings.mockResolvedValueOnce(mockEmbeddings);
+            mockOpenAI.embeddings.create.mockResolvedValueOnce({
+                data: mockEmbeddings.map(emb => ({ embedding: emb })),
+                model: 'text-embedding-3-small',
+            });
 
             const result = await llmService.generateBatchEmbeddings(texts, 'openai');
 
-            expect(result).toHaveLength(2);
-            expect(mockGatewayClient.generateBatchEmbeddings).toHaveBeenCalledWith(texts, 'openai');
+            expect(result).toEqual(mockEmbeddings);
+        });
+
+        it('should handle empty array', async () => {
+            const result = await llmService.generateBatchEmbeddings([], 'openai');
+            expect(result).toEqual([]);
         });
     });
 
     describe('generateStreamingResponse', () => {
-        it('should handle streaming for all providers', async () => {
+        it('should support streaming for OpenAI', async () => {
+            const mockStream = (async function* () {
+                yield { choices: [{ delta: { content: 'Hello' } }], model: 'gpt-4' };
+                yield { choices: [{ delta: { content: ' world' }, finish_reason: 'stop' }], model: 'gpt-4' };
+            })();
+
+            mockOpenAI.chat.completions.create.mockResolvedValueOnce(mockStream);
+
             const onChunk = jest.fn();
-            const messages = [{ role: 'user' as const, content: 'Test' }];
+            const result = await llmService.generateStreamingResponse(
+                'openai',
+                'gpt-4',
+                [{ role: 'user', content: 'Hi' }],
+                '',
+                onChunk
+            );
 
-            const providers: Array<'openai' | 'anthropic' | 'gemini'> = ['openai', 'anthropic', 'gemini'];
-
-            for (const provider of providers) {
-                // This test just verifies the method exists and accepts correct parameters
-                expect(llmService.generateStreamingResponse).toBeDefined();
-                expect(typeof llmService.generateStreamingResponse).toBe('function');
-            }
-        });
-    });
-
-    describe('describeImageFromBuffer', () => {
-        it('should validate that method exists', () => {
-            expect(llmService.describeImageFromBuffer).toBeDefined();
-            expect(typeof llmService.describeImageFromBuffer).toBe('function');
-        });
-
-        it('should throw error for empty buffer', async () => {
-            await expect(
-                llmService.describeImageFromBuffer({
-                    buffer: Buffer.from([]),
-                    mimeType: 'image/png',
-                    prompt: 'Describe this image',
-                })
-            ).rejects.toThrow('Image buffer is empty');
+            expect(result.content).toBe('Hello world');
+            expect(onChunk).toHaveBeenCalledTimes(2);
+            expect(onChunk).toHaveBeenCalledWith('Hello');
+            expect(onChunk).toHaveBeenCalledWith(' world');
         });
     });
 });

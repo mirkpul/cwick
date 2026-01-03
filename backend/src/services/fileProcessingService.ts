@@ -10,7 +10,6 @@ import structuredTableExtractionService, { StructuredTable } from './structuredT
 import powerpointExtractionService, { PowerPointSlide } from './powerpointExtractionService';
 import llmService from './llmService';
 import type { KnowledgeBaseEntry } from './knowledgeBaseService';
-import vectorStoreService from './vectorStoreService';
 import db from '../config/database';
 import logger from '../config/logger';
 import config from '../config/appConfig';
@@ -454,21 +453,6 @@ class FileProcessingService {
                 }
 
                 entries.push(insertResult.rows[0]);
-
-                // Upsert into vector service if enabled
-                await vectorStoreService.upsertEmbedding({
-                    id: String(insertResult.rows[0].id),
-                    vector: embedding,
-                    metadata: {
-                        kbId,
-                        source: 'knowledge_base',
-                        fileName: file.originalname,
-                        contentType: chunk.contentType || 'document',
-                        chunkIndex: chunk.index,
-                        totalChunks: chunk.totalChunks,
-                    },
-                    namespace: 'knowledge_base',
-                });
             }
 
             logger.info(`Stored ${entries.length} entries in knowledge base`);

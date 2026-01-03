@@ -18,7 +18,7 @@ interface ConversationMessage {
   [key: string]: unknown;
 }
 
-interface TwinProfile {
+interface KnowledgeBaseProfile {
   name?: string;
   profession?: string;
   bio?: string;
@@ -212,7 +212,7 @@ class ContextService {
   /**
    * Generate a preview of the context and system prompt
    */
-  generateContextPreview(twin: TwinProfile, knowledge: KnowledgeEntry[] = []): {
+  generateContextPreview(kb: KnowledgeBaseProfile, knowledge: KnowledgeEntry[] = []): {
     identity: string;
     personality: string;
     expertise: string;
@@ -226,19 +226,19 @@ class ContextService {
     contextSample?: string;
   } {
     // Build identity section
-    const identity = `You are ${twin.name || 'a digital assistant'}, a ${twin.profession || 'professional'}.`;
+    const identity = `You are ${kb.name || 'a digital assistant'}, a ${kb.profession || 'professional'}.`;
 
     // Build personality section
-    const personality = twin.communication_style || 'Professional and helpful';
+    const personality = kb.communication_style || 'Professional and helpful';
 
     // Build expertise section
-    const expertise = `Professional Expertise: ${twin.profession || 'General assistance'}`;
+    const expertise = `Professional Expertise: ${kb.profession || 'General assistance'}`;
 
     // Build capabilities section
-    const capabilities = twin.capabilities ? JSON.stringify(twin.capabilities) : 'General Q&A';
+    const capabilities = kb.capabilities ? JSON.stringify(kb.capabilities) : 'General Q&A';
 
     // Build business info section
-    const businessInfo = twin.pricing_info ? JSON.stringify(twin.pricing_info) : '';
+    const businessInfo = kb.pricing_info ? JSON.stringify(kb.pricing_info) : '';
 
     // Build knowledge base section
     const sampleChunks = (knowledge ?? []).slice(0, 3).map((k, index) => ({
@@ -253,7 +253,7 @@ class ContextService {
     const guidelines = 'Conversation Guidelines: Be helpful, accurate, and respectful.';
 
     // Custom instructions
-    const customInstructions = twin.system_prompt || null;
+    const customInstructions = kb.system_prompt || null;
 
     // Build full prompt
     const fullPromptParts = [identity, personality, expertise, guidelines];
@@ -307,9 +307,9 @@ class ContextService {
   /**
    * Generate continuation prompt with semantic results
    */
-  generateContinuationPrompt(twin: TwinProfile, semanticResults: SemanticResult[] | null): string {
+  generateContinuationPrompt(kb: KnowledgeBaseProfile, semanticResults: SemanticResult[] | null): string {
     const semanticSection = this._buildSemanticKnowledgeSection(semanticResults);
-    const identity = `You are ${twin.name || 'a digital assistant'}, a ${twin.profession || 'professional'}.`;
+    const identity = `You are ${kb.name || 'a digital assistant'}, a ${kb.profession || 'professional'}.`;
 
     if (semanticSection) {
       return `${semanticSection}\n\n${identity}`;
@@ -321,9 +321,9 @@ class ContextService {
   /**
    * Generate enhanced system prompt with semantic results
    */
-  generateEnhancedSystemPrompt(twin: TwinProfile, knowledgeBase: KnowledgeEntry[] | null, semanticResults: SemanticResult[] | null): string {
-    if (!twin) {
-      throw new Error('Twin is required');
+  generateEnhancedSystemPrompt(kb: KnowledgeBaseProfile, knowledgeBase: KnowledgeEntry[] | null, semanticResults: SemanticResult[] | null): string {
+    if (!kb) {
+      throw new Error('Knowledge Base is required');
     }
 
     const sections: string[] = [];
@@ -334,13 +334,13 @@ class ContextService {
       sections.push(semanticSection);
     }
 
-    // Digital Twin Identity
-    sections.push('# Digital Twin Identity');
-    sections.push(`You are ${twin.name || 'a digital assistant'}, a ${twin.profession || 'professional'}.`);
+    // Knowledge Base Identity
+    sections.push('# Knowledge Base Identity');
+    sections.push(`You are ${kb.name || 'a digital assistant'}, a ${kb.profession || 'professional'}.`);
 
     // Professional Expertise
     sections.push('\n# Professional Expertise');
-    sections.push(twin.bio || 'Experienced professional.');
+    sections.push(kb.bio || 'Experienced professional.');
 
     // Add knowledge base only if no semantic results
     if (!semanticResults || semanticResults.length === 0) {
@@ -357,9 +357,9 @@ class ContextService {
     sections.push('Be helpful, accurate, and respectful.');
 
     // Custom instructions
-    if (twin.system_prompt) {
+    if (kb.system_prompt) {
       sections.push('\n# Additional Instructions');
-      sections.push(twin.system_prompt);
+      sections.push(kb.system_prompt);
     }
 
     return sections.join('\n');
@@ -368,11 +368,11 @@ class ContextService {
   /**
    * Generate system prompt (legacy method)
    */
-  generateSystemPrompt(twin: TwinProfile, knowledgeBase: KnowledgeEntry[]): string {
-    if (!twin) {
-      throw new Error('Twin is required');
+  generateSystemPrompt(kb: KnowledgeBaseProfile, knowledgeBase: KnowledgeEntry[]): string {
+    if (!kb) {
+      throw new Error('Knowledge Base is required');
     }
-    return this.generateEnhancedSystemPrompt(twin, knowledgeBase, null);
+    return this.generateEnhancedSystemPrompt(kb, knowledgeBase, null);
   }
 }
 

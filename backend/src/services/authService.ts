@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import db from '../config/database';
 import logger from '../config/logger';
 import { logErrors } from '../utils/errorLogging';
+import knowledgeBaseService from './knowledgeBaseService';
 
 interface User {
   id: string;
@@ -70,6 +71,16 @@ class AuthService {
          VALUES ($1, 'free', 100, NOW(), NOW() + INTERVAL '30 days')`,
         [user.id]
       );
+
+      // Create default knowledge base for new kb_owner
+      const kb = await knowledgeBaseService.createKnowledgeBase(user.id, {
+        name: 'My Knowledge Base',
+        description: 'Your personal AI assistant knowledge base',
+        llmProvider: 'openai',
+        llmModel: 'gpt-4',
+      });
+
+      logger.info(`Knowledge base created for user ${user.id}: ${kb.name}`);
     }
 
     // Generate JWT token

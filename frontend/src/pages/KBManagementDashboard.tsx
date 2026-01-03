@@ -16,7 +16,7 @@ import WebScrapingTab from '../components/web/WebScrapingTab';
 import ConversationsList from '../components/ConversationsList';
 import OverviewTab from '../components/OverviewTab';
 
-interface DigitalTwin {
+interface KnowledgeBase {
   id: string;
   name: string;
   profession?: string;
@@ -79,7 +79,7 @@ export default function KBManagementDashboard(): React.JSX.Element {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
-  const [twin, setTwin] = useState<DigitalTwin | null>(null);
+  const [kb, setKb] = useState<KnowledgeBase | null>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [knowledgeBase, setKnowledgeBase] = useState<KnowledgeEntry[]>([]);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFileType[]>([]);
@@ -106,19 +106,19 @@ export default function KBManagementDashboard(): React.JSX.Element {
 
   const loadDashboardData = async (): Promise<void> => {
     try {
-      const [twinRes, convsRes] = await Promise.all([
+      const [kbRes, convsRes] = await Promise.all([
         knowledgeBaseAPI.getMyKB(),
         chatAPI.getMyConversations(),
       ]);
 
-      const twinData = twinRes.data.knowledgeBase || twinRes.data.twin;
-      setTwin(twinData);
+      const kbData = kbRes.data.knowledgeBase;
+      setKb(kbData);
       setConversations(convsRes.data.conversations);
 
-      if (twinData) {
+      if (kbData) {
         const [kbRes, filesRes, emailStatusRes] = await Promise.all([
-          knowledgeBaseAPI.getKnowledge(twinData.id),
-          knowledgeBaseAPI.listKnowledgeFiles(twinData.id),
+          knowledgeBaseAPI.getKnowledge(kbData.id),
+          knowledgeBaseAPI.listKnowledgeFiles(kbData.id),
           emailAPI.getSyncStatus().catch(() => ({ data: { connected: false } }))
         ]);
         setKnowledgeBase(kbRes.data.knowledge);
@@ -131,7 +131,7 @@ export default function KBManagementDashboard(): React.JSX.Element {
       const apiError = error as ApiError;
       if (apiError.response?.status === 404) {
         // No knowledge base created yet - that's ok, dashboard will show create prompt
-        setTwin(null);
+        setKb(null);
         setConversations([]);
       } else {
         toast.error('Failed to load dashboard data');
@@ -147,7 +147,7 @@ export default function KBManagementDashboard(): React.JSX.Element {
     }
 
     try {
-      await knowledgeBaseAPI.addKnowledge(twin!.id, {
+      await knowledgeBaseAPI.addKnowledge(kb!.id, {
         question: newKnowledge.title,
         answer: newKnowledge.content,
         category: 'manual_entry',
@@ -165,7 +165,7 @@ export default function KBManagementDashboard(): React.JSX.Element {
     if (!confirm('Are you sure you want to delete this entry?')) return;
 
     try {
-      await knowledgeBaseAPI.deleteKnowledge(twin!.id, entryId);
+      await knowledgeBaseAPI.deleteKnowledge(kb!.id, entryId);
       toast.success('Knowledge entry deleted');
       loadDashboardData();
     } catch {
@@ -174,7 +174,7 @@ export default function KBManagementDashboard(): React.JSX.Element {
   };
 
   const handleFileUploadSuccess = async (formData: FormData, onProgress: (progressEvent: { loaded: number; total: number }) => void): Promise<void> => {
-    await knowledgeBaseAPI.uploadKnowledgeFile(twin!.id, formData, (progressEvent) => {
+    await knowledgeBaseAPI.uploadKnowledgeFile(kb!.id, formData, (progressEvent) => {
       const total = progressEvent.total || 100;
       const percentCompleted = Math.round((progressEvent.loaded * 100) / total);
       onProgress({ loaded: percentCompleted, total: 100 });
@@ -182,7 +182,7 @@ export default function KBManagementDashboard(): React.JSX.Element {
     toast.success('File uploaded and processed successfully!');
 
     // Reload files list
-    const filesRes = await knowledgeBaseAPI.listKnowledgeFiles(twin!.id);
+    const filesRes = await knowledgeBaseAPI.listKnowledgeFiles(kb!.id);
     setUploadedFiles((filesRes.data.files || []) as UploadedFileType[]);
   };
 
@@ -191,7 +191,7 @@ export default function KBManagementDashboard(): React.JSX.Element {
   };
 
   const getChatUrl = (): string => {
-    return `${window.location.origin}/chat/${twin?.id}`;
+    return `${window.location.origin}/chat/${kb?.id}`;
   };
 
   const copyChatUrl = (): void => {
@@ -228,7 +228,7 @@ export default function KBManagementDashboard(): React.JSX.Element {
       </nav>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {!twin ? (
+        {!kb ? (
           /* No Knowledge Base - Show onboarding prompt */
           <div className="max-w-2xl mx-auto">
             <div className="bg-white rounded-lg shadow-lg p-8 text-center">
@@ -239,7 +239,7 @@ export default function KBManagementDashboard(): React.JSX.Element {
               </div>
               <h2 className="text-2xl font-bold text-gray-900 mb-4">Welcome to your Dashboard!</h2>
               <p className="text-gray-600 mb-6">
-                You haven't created a knowledge base yet. Create one to get started with AI-powered Q&A,
+                You haven&apos;t created a knowledge base yet. Create one to get started with AI-powered Q&A,
                 document management, and intelligent conversations.
               </p>
               <button
@@ -259,11 +259,10 @@ export default function KBManagementDashboard(): React.JSX.Element {
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
-                    className={`py-4 px-1 border-b-2 font-medium text-sm capitalize ${
-                      activeTab === tab
+                    className={`py-4 px-1 border-b-2 font-medium text-sm capitalize ${activeTab === tab
                         ? 'border-primary-600 text-primary-600'
                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    }`}
+                      }`}
                   >
                     {TAB_LABELS[tab]}
                   </button>
@@ -277,160 +276,160 @@ export default function KBManagementDashboard(): React.JSX.Element {
               </nav>
             </div>
 
-        {/* Overview Tab */}
-        {activeTab === 'overview' && (
-          <OverviewTab
-            userName={user?.full_name || 'User'}
-            kbName={twin?.name || 'Knowledge Base'}
-            chatUrl={getChatUrl()}
-            conversations={conversations}
-            knowledgeBaseCount={knowledgeBase.length}
-            uploadedFilesCount={uploadedFiles.length}
-            emailSyncStatus={emailSyncStatus}
-            onCopyChatUrl={copyChatUrl}
-          />
-        )}
-
-        {/* Conversations Tab */}
-        {activeTab === 'conversations' && (
-          <ConversationsList conversations={conversations} />
-        )}
-
-        {/* Semantic Search Tab */}
-        {activeTab === 'search' && (
-          <div>
-            <SemanticSearch twinId={twin!.id} />
-          </div>
-        )}
-
-        {/* Knowledge Base Tab */}
-        {activeTab === 'knowledge' && (
-          <div className="space-y-6">
-            {/* File Upload Section */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-bold mb-4">Upload Documents</h2>
-              <p className="text-sm text-gray-600 mb-4">
-                Upload PDF, TXT, Markdown, or CSV files. Files will be automatically chunked and converted to embeddings for semantic search.
-              </p>
-              <FileUploadDropZone
-                twinId={twin!.id}
-                onUploadSuccess={handleFileUploadSuccess}
-                onUploadError={(error: string) => toast.error(error)}
+            {/* Overview Tab */}
+            {activeTab === 'overview' && (
+              <OverviewTab
+                userName={user?.full_name || 'User'}
+                kbName={kb?.name || 'Knowledge Base'}
+                chatUrl={getChatUrl()}
+                conversations={conversations}
+                knowledgeBaseCount={knowledgeBase.length}
+                uploadedFilesCount={uploadedFiles.length}
+                emailSyncStatus={emailSyncStatus}
+                onCopyChatUrl={copyChatUrl}
               />
-            </div>
-
-            {/* Uploaded Files List */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-bold mb-4">Uploaded Files</h2>
-              <KnowledgeBaseFileList
-                twinId={twin!.id}
-                files={uploadedFiles}
-                onFileDeleted={handleFileDeleted}
-              />
-            </div>
-
-            {/* Web Scraping Configurations */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="mb-6">
-                <h2 className="text-xl font-bold">Web Scraping Automations</h2>
-                <p className="text-sm text-gray-600 mt-2">
-                  Configure website sources that will be cleaned, chunked, and added automatically to your knowledge base.
-                </p>
-              </div>
-              <WebScrapingTab />
-            </div>
-
-            {/* Manual Entry Section */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-bold mb-4">Add Manual Knowledge Entry</h2>
-              <div className="space-y-4">
-                <input
-                  type="text"
-                  placeholder="Question or topic"
-                  value={newKnowledge.title}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewKnowledge({ ...newKnowledge, title: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-                />
-                <textarea
-                  rows={4}
-                  placeholder="Answer or information"
-                  value={newKnowledge.content}
-                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNewKnowledge({ ...newKnowledge, content: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-                />
-                <button
-                  onClick={addKnowledgeEntry}
-                  className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
-                >
-                  Add Entry
-                </button>
-              </div>
-            </div>
-
-            {/* Manual Entries List */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-bold mb-4">Manual Knowledge Entries</h2>
-              {knowledgeBase.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">No manual entries yet</p>
-              ) : (
-                <div className="space-y-4">
-                  {knowledgeBase.map((entry) => (
-                    <div key={entry.id} className="border rounded-lg p-4">
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <h3 className="font-semibold">{entry.title}</h3>
-                          <p className="text-sm text-gray-600 mt-1">{entry.content}</p>
-                        </div>
-                        <button
-                          onClick={() => deleteKnowledgeEntry(entry.id)}
-                          className="ml-4 text-red-600 hover:text-red-700 text-sm"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Email Tab */}
-        {activeTab === 'email' && (
-          <div className="space-y-6">
-            {!emailConnected ? (
-              <EmailConnectionCard onConnectionSuccess={loadDashboardData} />
-            ) : (
-              <>
-                {/* Email Sync Status */}
-                {emailSyncStatus && (
-                  <EmailSyncStatus
-                    syncStatus={emailSyncStatus}
-                    onSyncComplete={loadDashboardData}
-                  />
-                )}
-
-                {/* Email List */}
-                <EmailList />
-
-                {/* Email Settings */}
-                {emailSyncStatus && (
-                  <EmailSettings
-                    syncStatus={emailSyncStatus}
-                    onDisconnect={loadDashboardData}
-                  />
-                )}
-              </>
             )}
-          </div>
-        )}
+
+            {/* Conversations Tab */}
+            {activeTab === 'conversations' && (
+              <ConversationsList conversations={conversations} />
+            )}
+
+            {/* Semantic Search Tab */}
+            {activeTab === 'search' && (
+              <div>
+                <SemanticSearch kbId={kb!.id} />
+              </div>
+            )}
+
+            {/* Knowledge Base Tab */}
+            {activeTab === 'knowledge' && (
+              <div className="space-y-6">
+                {/* File Upload Section */}
+                <div className="bg-white rounded-lg shadow p-6">
+                  <h2 className="text-xl font-bold mb-4">Upload Documents</h2>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Upload PDF, TXT, Markdown, or CSV files. Files will be automatically chunked and converted to embeddings for semantic search.
+                  </p>
+                  <FileUploadDropZone
+                    kbId={kb!.id}
+                    onUploadSuccess={handleFileUploadSuccess}
+                    onUploadError={(error: string) => toast.error(error)}
+                  />
+                </div>
+
+                {/* Uploaded Files List */}
+                <div className="bg-white rounded-lg shadow p-6">
+                  <h2 className="text-xl font-bold mb-4">Uploaded Files</h2>
+                  <KnowledgeBaseFileList
+                    kbId={kb!.id}
+                    files={uploadedFiles}
+                    onFileDeleted={handleFileDeleted}
+                  />
+                </div>
+
+                {/* Web Scraping Configurations */}
+                <div className="bg-white rounded-lg shadow p-6">
+                  <div className="mb-6">
+                    <h2 className="text-xl font-bold">Web Scraping Automations</h2>
+                    <p className="text-sm text-gray-600 mt-2">
+                      Configure website sources that will be cleaned, chunked, and added automatically to your knowledge base.
+                    </p>
+                  </div>
+                  <WebScrapingTab />
+                </div>
+
+                {/* Manual Entry Section */}
+                <div className="bg-white rounded-lg shadow p-6">
+                  <h2 className="text-xl font-bold mb-4">Add Manual Knowledge Entry</h2>
+                  <div className="space-y-4">
+                    <input
+                      type="text"
+                      placeholder="Question or topic"
+                      value={newKnowledge.title}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewKnowledge({ ...newKnowledge, title: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                    />
+                    <textarea
+                      rows={4}
+                      placeholder="Answer or information"
+                      value={newKnowledge.content}
+                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNewKnowledge({ ...newKnowledge, content: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                    />
+                    <button
+                      onClick={addKnowledgeEntry}
+                      className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+                    >
+                      Add Entry
+                    </button>
+                  </div>
+                </div>
+
+                {/* Manual Entries List */}
+                <div className="bg-white rounded-lg shadow p-6">
+                  <h2 className="text-xl font-bold mb-4">Manual Knowledge Entries</h2>
+                  {knowledgeBase.length === 0 ? (
+                    <p className="text-gray-500 text-center py-8">No manual entries yet</p>
+                  ) : (
+                    <div className="space-y-4">
+                      {knowledgeBase.map((entry) => (
+                        <div key={entry.id} className="border rounded-lg p-4">
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <h3 className="font-semibold">{entry.title}</h3>
+                              <p className="text-sm text-gray-600 mt-1">{entry.content}</p>
+                            </div>
+                            <button
+                              onClick={() => deleteKnowledgeEntry(entry.id)}
+                              className="ml-4 text-red-600 hover:text-red-700 text-sm"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Email Tab */}
+            {activeTab === 'email' && (
+              <div className="space-y-6">
+                {!emailConnected ? (
+                  <EmailConnectionCard onConnectionSuccess={loadDashboardData} />
+                ) : (
+                  <>
+                    {/* Email Sync Status */}
+                    {emailSyncStatus && (
+                      <EmailSyncStatus
+                        syncStatus={emailSyncStatus}
+                        onSyncComplete={loadDashboardData}
+                      />
+                    )}
+
+                    {/* Email List */}
+                    <EmailList />
+
+                    {/* Email Settings */}
+                    {emailSyncStatus && (
+                      <EmailSettings
+                        syncStatus={emailSyncStatus}
+                        onDisconnect={loadDashboardData}
+                      />
+                    )}
+                  </>
+                )}
+              </div>
+            )}
 
             {/* Settings Tab */}
-            {activeTab === 'settings' && twin && (
+            {activeTab === 'settings' && kb && (
               <div className="bg-white rounded-lg shadow p-6">
                 <h2 className="text-xl font-bold mb-6">Knowledge Base Settings</h2>
-                <KnowledgeBaseSettings twin={twin} onUpdate={loadDashboardData} />
+                <KnowledgeBaseSettings knowledgeBase={kb} onUpdate={loadDashboardData} />
               </div>
             )}
           </>

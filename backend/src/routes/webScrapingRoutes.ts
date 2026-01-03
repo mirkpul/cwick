@@ -5,7 +5,7 @@ import webScrapingController from '../controllers/webScrapingController';
 const router = Router();
 
 router.use(auth);
-router.use(requireRole(['professional', 'super_admin']));
+router.use(requireRole(['kb_owner', 'super_admin']));
 
 router.get('/runs/:runId/screenshots/:filename', webScrapingController.getScreenshot.bind(webScrapingController));
 router.get('/', webScrapingController.listSources.bind(webScrapingController));

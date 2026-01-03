@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 
 interface Stats {
   totalUsers: number;
-  totalTwins: number;
+  totalKnowledgeBases: number;
   totalConversations: number;
   activeSubscriptions: number;
 }
@@ -23,7 +23,7 @@ export default function SuperAdminDashboard() {
   const { user, logout } = useAuth();
   const [stats] = useState<Stats>({
     totalUsers: 0,
-    totalTwins: 0,
+    totalKnowledgeBases: 0,
     totalConversations: 0,
     activeSubscriptions: 0,
   });
@@ -83,7 +83,7 @@ export default function SuperAdminDashboard() {
           </div>
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-gray-500 text-sm font-medium">Knowledge Bases</h3>
-            <p className="text-3xl font-bold text-gray-900 mt-2">{stats.totalTwins}</p>
+            <p className="text-3xl font-bold text-gray-900 mt-2">{stats.totalKnowledgeBases}</p>
             <p className="text-sm text-green-600 mt-1">+8% from last month</p>
           </div>
           <div className="bg-white rounded-lg shadow p-6">

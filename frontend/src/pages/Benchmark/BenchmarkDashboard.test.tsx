@@ -47,9 +47,9 @@ vi.mock('react-router-dom', async () => {
 });
 
 describe('BenchmarkDashboard', () => {
-  const mockTwin = {
-    id: 'twin-123',
-    name: 'Test Twin',
+  const mockKB = {
+    id: 'kb-123',
+    name: 'Test Knowledge Base',
   };
 
   const mockDatasets = [
@@ -83,7 +83,7 @@ describe('BenchmarkDashboard', () => {
     mockNavigate.mockClear();
 
     (knowledgeBaseAPI.getMyKB as Mock).mockResolvedValue({
-      data: { knowledgeBase: mockTwin },
+      data: { knowledgeBase: mockKB },
     });
     (benchmarkAPI.listDatasets as Mock).mockResolvedValue({
       data: mockDatasets,
@@ -220,7 +220,7 @@ describe('BenchmarkDashboard', () => {
 
     await waitFor(() => {
       expect(benchmarkAPI.createDataset).toHaveBeenCalledWith({
-        kb_id: 'twin-123',
+        kb_id: 'kb-123',
         name: 'My New Dataset',
         description: 'A test description',
         dataset_type: 'golden',
@@ -244,7 +244,7 @@ describe('BenchmarkDashboard', () => {
     });
   });
 
-  it('redirects to onboarding if no twin exists', async () => {
+  it('redirects to onboarding if no knowledge base exists', async () => {
     (knowledgeBaseAPI.getMyKB as Mock).mockRejectedValue({
       response: { status: 404 },
     });

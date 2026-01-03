@@ -26,7 +26,7 @@ interface PurposeConfig {
   clarifyingPrompt?: string;
 }
 
-interface DigitalTwin {
+interface KnowledgeBase {
   id: string;
   name?: string;
   profession?: string;
@@ -51,7 +51,7 @@ interface DigitalTwin {
 }
 
 interface KnowledgeBaseSettingsProps {
-  twin: DigitalTwin;
+  knowledgeBase: KnowledgeBase;
   onUpdate?: () => void;
 }
 
@@ -81,7 +81,7 @@ interface FormData {
   clarifyingPrompt: string;
 }
 
-export default function KnowledgeBaseSettings({ twin, onUpdate }: KnowledgeBaseSettingsProps): React.JSX.Element {
+export default function KnowledgeBaseSettings({ knowledgeBase, onUpdate }: KnowledgeBaseSettingsProps): React.JSX.Element {
   const [formData, setFormData] = useState<FormData>({
     name: '',
     profession: '',
@@ -122,41 +122,41 @@ export default function KnowledgeBaseSettings({ twin, onUpdate }: KnowledgeBaseS
   const [newTrait, setNewTrait] = useState<string>('');
 
   useEffect(() => {
-    if (twin) {
+    if (knowledgeBase) {
       setFormData({
-        name: twin.name || '',
-        profession: twin.profession || '',
-        bio: twin.bio || '',
-        avatar_url: twin.avatar_url || '',
-        llm_provider: twin.llm_provider || 'openai',
-        llm_model: twin.llm_model || '',
-        temperature: twin.temperature || 0.7,
-        max_tokens: twin.max_tokens || 1000,
-        personality_traits: Array.isArray(twin.personality_traits)
-          ? twin.personality_traits
-          : (twin.personality_traits ? Object.values(twin.personality_traits) : []),
-        communication_style: twin.communication_style || '',
-        capabilities: twin.capabilities || {
+        name: knowledgeBase.name || '',
+        profession: knowledgeBase.profession || '',
+        bio: knowledgeBase.bio || '',
+        avatar_url: knowledgeBase.avatar_url || '',
+        llm_provider: knowledgeBase.llm_provider || 'openai',
+        llm_model: knowledgeBase.llm_model || '',
+        temperature: knowledgeBase.temperature || 0.7,
+        max_tokens: knowledgeBase.max_tokens || 1000,
+        personality_traits: Array.isArray(knowledgeBase.personality_traits)
+          ? knowledgeBase.personality_traits
+          : (knowledgeBase.personality_traits ? Object.values(knowledgeBase.personality_traits) : []),
+        communication_style: knowledgeBase.communication_style || '',
+        capabilities: knowledgeBase.capabilities || {
           q_and_a: true,
           scheduling: false,
           consultation: false,
           recommendations: false,
         },
-        services: Array.isArray(twin.services) ? twin.services : [],
-        pricing_info: Array.isArray(twin.pricing_info) ? twin.pricing_info : [],
-        availability_schedule: twin.availability_schedule || { general: '', hours: {} },
-        handover_threshold: twin.handover_threshold || 0.5,
-        auto_responses_enabled: twin.auto_responses_enabled !== false,
-        system_prompt: twin.system_prompt || '',
-        semantic_search_max_results: twin.semantic_search_max_results || 3,
-        purpose: twin.purpose || '',
-        requireClarifyingQuestions: twin.purpose_config?.requireClarifyingQuestions ?? false,
-        purposeRequiredInputs: Array.isArray(twin.purpose_config?.requiredInputs) ? twin.purpose_config!.requiredInputs! : [],
-        clarifyingPrompt: twin.purpose_config?.clarifyingPrompt || '',
+        services: Array.isArray(knowledgeBase.services) ? knowledgeBase.services : [],
+        pricing_info: Array.isArray(knowledgeBase.pricing_info) ? knowledgeBase.pricing_info : [],
+        availability_schedule: knowledgeBase.availability_schedule || { general: '', hours: {} },
+        handover_threshold: knowledgeBase.handover_threshold || 0.5,
+        auto_responses_enabled: knowledgeBase.auto_responses_enabled !== false,
+        system_prompt: knowledgeBase.system_prompt || '',
+        semantic_search_max_results: knowledgeBase.semantic_search_max_results || 3,
+        purpose: knowledgeBase.purpose || '',
+        requireClarifyingQuestions: knowledgeBase.purpose_config?.requireClarifyingQuestions ?? false,
+        purposeRequiredInputs: Array.isArray(knowledgeBase.purpose_config?.requiredInputs) ? knowledgeBase.purpose_config!.requiredInputs! : [],
+        clarifyingPrompt: knowledgeBase.purpose_config?.clarifyingPrompt || '',
         newPurposeInput: '',
       });
     }
-  }, [twin]);
+  }, [knowledgeBase]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
@@ -190,7 +190,7 @@ export default function KnowledgeBaseSettings({ twin, onUpdate }: KnowledgeBaseS
         },
       };
 
-      await knowledgeBaseAPI.update(twin.id, updateData);
+      await knowledgeBaseAPI.update(knowledgeBase.id, updateData);
       toast.success('Settings updated successfully');
       if (onUpdate) onUpdate();
     } catch {
@@ -329,13 +329,13 @@ export default function KnowledgeBaseSettings({ twin, onUpdate }: KnowledgeBaseS
         <h3 className="text-lg font-semibold mb-4 text-gray-900">Purpose & Clarifications</h3>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Twin Purpose</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Knowledge Base Purpose</label>
             <textarea
               rows={2}
               value={formData.purpose}
               onChange={(e) => setFormData({ ...formData, purpose: e.target.value })}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-              placeholder="Describe the main goal of this twin..."
+              placeholder="Describe the main goal of this knowledge base..."
             />
           </div>
 
@@ -399,7 +399,7 @@ export default function KnowledgeBaseSettings({ twin, onUpdate }: KnowledgeBaseS
               value={formData.clarifyingPrompt}
               onChange={(e) => setFormData({ ...formData, clarifyingPrompt: e.target.value })}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-              placeholder="Optional instructions for how the twin should request missing data. Use {{missing_inputs}} as placeholder."
+              placeholder="Optional instructions for how the knowledge base should request missing data. Use {{missing_inputs}} as placeholder."
             />
           </div>
         </div>
@@ -671,7 +671,7 @@ export default function KnowledgeBaseSettings({ twin, onUpdate }: KnowledgeBaseS
               <label className="block text-sm font-medium text-gray-700">
                 Custom System Prompt (Advanced)
               </label>
-              <ContextPreview kbId={twin.id} />
+              <ContextPreview kbId={knowledgeBase.id} />
             </div>
             <textarea
               rows={4}
